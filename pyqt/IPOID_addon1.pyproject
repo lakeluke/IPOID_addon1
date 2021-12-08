@@ -1,0 +1,3 @@
+{
+    "files": ["startpanel.py","ui/frequency_setting.ui","ui/start_panel.ui","ui/dialog.ui","ui/info_dialog.ui","ui/calibration_panel.ui","ui/calibration_result.ui","appmain.py","global_config.py","info_dialog.py","start_panel.py"]
+}
