@@ -89,7 +89,8 @@ def load():
 
 def create_default_config(create_template_file):
     global config_params
-    config_params = {'eyetracker': {'frequency': 60},
+    config_params = {'eyetracker': {'frequency': 60,
+                                    'calibration_point_number': 9},
                      'database': {'path': './imgdb'},
                      'data': {'path': './outdata'},
                      'log': {'path': './log'},
