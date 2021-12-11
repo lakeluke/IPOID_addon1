@@ -13,7 +13,7 @@ info_dialog = InfoDialog()
 start_panel = StartPanel()
 main_window = MainWindow()
 
-info_dialog.begin_test.connect(start_panel.begin_setting)
+info_dialog.begin_setting.connect(start_panel.begin_setting)
 
 info_dialog.ui_load.show()
 

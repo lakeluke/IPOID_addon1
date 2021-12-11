@@ -14,13 +14,12 @@ import global_config
 
 class InfoDialog(QWidget):
     # custom signals
-    signal_begin_test = Signal(str)
+    begin_setting = Signal(str)
 
     def __init__(self):
         super(InfoDialog, self).__init__()
         self.ui_load = self.load_ui()
         self.ui_load.setWindowTitle('Information Fill')
-        print(global_config.get_value('data', 'path', './outdata'))
         self.out_data_path = Path(global_config.get_value('data', 'path', './outdata')).absolute()
         self.info_path = './debug/'
         self.info_data = {}
@@ -109,7 +108,8 @@ class InfoDialog(QWidget):
         fid = open(self.participant_info_file, mode='w')
         json.dump(self.info_data, fid, ensure_ascii=False)
         fid.close()
-        self.signal_begin_test.emit(self.info_path)
+        global_config.set_value('data','path',self.info_path)
+        self.begin_setting.emit(self.info_path)
         self.ui_load.close()
         self.close()
 

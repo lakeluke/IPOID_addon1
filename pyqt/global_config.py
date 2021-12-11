@@ -17,7 +17,7 @@ def set_value(section, option, value):
     config_params[section][option] = value
 
 
-def get_value(section, option, default_value):
+def get_value(section, option, default_value=None):
     global config_params
     try:
         return config_params[section][option]
@@ -94,6 +94,10 @@ def create_default_config(create_template_file):
                      'database': {'path': './imgdb'},
                      'data': {'path': './outdata'},
                      'log': {'path': './log'},
+                     'image_show':{
+                         'last_time': 10,
+                         'time_interval': 3
+                     },
                      'mode': {'debug': False,
                               'ignore_no_eyetracker': False,
                               'skip_eyetracker_calibration': False,

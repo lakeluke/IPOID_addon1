@@ -43,19 +43,18 @@ class CalibrationWidget(QWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.init_ui()
-        self.init_calibration_params()
+        self.eyetracker = None
         self.resolution = (1920, 1080)
-
-        self.timer = QTimer()
-        self.timer.stop()
-        self.timer.setInterval(100)
-        self.timer.timeout.connect(self.do_timer_timeout)
-        self.timer.start()
-
+        self.is_debug = global_config.get_value('mode', 'debug', False)
+        self.refresh_interval_ms = 100
+        self.point_show_time_refresh = 10
+        self.point_show_calibration_time_refresh = 5
+        self.point_show_interval_refresh = 2
         self.current_point = 0
         self.current_timer = 0
-        self.eyetracker = None
+        self.init_ui()
+        self.init_calibration_params()
+        self.init_timer()
 
     # custom signals
     calibration_finish = Signal(list, list)
@@ -64,6 +63,7 @@ class CalibrationWidget(QWidget):
     def init_ui(self):
         self.setObjectName(u"calibration_widget")
         self.resize(self.resolution[0],self.resolution[1])
+        self.move(0,0)
         self.main_layout = QGridLayout(self)
         self.main_layout.setContentsMargins(0, 0, 0, 0)
         self.main_layout.setSpacing(0)
@@ -72,9 +72,10 @@ class CalibrationWidget(QWidget):
         self.setContentsMargins(0,0,0,0)
         self.point_show.setObjectName(u"point_show")
         self.point_show.setStyleSheet("background-color:#808080")
+        self.main_layout.addWidget(self.point_show)
 
     def init_calibration_params(self):
-        self.calibration_point_number = global_config.get_value('eyetracker', 'calibration_point_number')
+        self.calibration_point_number = global_config.get_value('eyetracker', 'calibration_point_number',5)
         if self.calibration_point_number == 5:
             self.calibration_point_list = [(0.1, 0.1), (0.9, 0.1), (0.5, 0.5), (0.1, 0.9), (0.9, 0.9)]
         elif self.calibration_point_number == 9:
@@ -93,37 +94,51 @@ class CalibrationWidget(QWidget):
                                               '此参数将被设置为默认值5')
             self.calibration_point_list = [(0.1, 0.1), (0.9, 0.1), (0.5, 0.5), (0.1, 0.9), (0.9, 0.9)]
 
+    def init_timer(self):
+        self.timer = QTimer()
+        self.timer.stop()
+        self.timer.setInterval(self.refresh_interval_ms)
+        self.timer.timeout.connect(self.do_timer_timeout)
 
-    def calibration_step(self):
-        self.calibration = tr.ScreenBasedCalibration(self.eyetracker)
-        self.calibration.enter_calibration_mode()
+    @Slot()
+    def start_calibration(self):
+        self.timer.start()
+        self.showFullScreen()
+        if self.is_debug:
+            QMessageBox.information(self,u'调试模式',u'未发现眼动仪，仅演示显示效果！')
+        else:
+            self.calibration = tr.ScreenBasedCalibration(self.eyetracker)
+            self.calibration.enter_calibration_mode()
 
-    @Slot
+    @Slot()
     def do_timer_timeout(self):
         if self.current_point < self.calibration_point_number:
             self.point_show.p_x = self.calibration_point_list[self.current_point][0]
             self.point_show.p_y = self.calibration_point_list[self.current_point][1]
             self.point_show.p_rad = 40.0 - self.current_timer * 4.0
             self.point_show.update()
-            if self.current_timer == 5:
-                self.calibration.collect_data(self.point_show.p_x, self.point_show.p_y)
+            if self.current_timer == self.point_show_time_refresh-self.point_show_calibration_time_refresh:
+                if not self.is_debug:
+                    self.calibration.collect_data(self.point_show.p_x, self.point_show.p_y)
                 time.sleep(0.5)
             self.current_timer = self.current_timer + 1
-            if self.current_timer == 10:
+            if self.current_timer == self.point_show_time_refresh:
                 self.current_point = self.current_point + 1
                 self.current_timer = 0
         else:
             self.timer.stop()
-            self.calibration_result = self.calibration.compute_and_apply()
-            self.calibration.leave_calibration_mode()
+            if not self.is_debug:
+                self.calibration_result = self.calibration.compute_and_apply()
+                self.calibration.leave_calibration_mode()
             left_gaze_data = []
             right_gaze_data = []
-            for calibration_point in self.calibration_result.calibration_points:
-                for calibration_samples in calibration_point._CalibrationPoint__calibration_samples:
-                    left_data = calibration_samples._CalibrationSample__left_eye._CalibrationEyeData__position_on_display_area
-                    right_data = calibration_samples._CalibrationSample__right_eye._CalibrationEyeData__position_on_display_area
-                    left_gaze_data.append(left_data)
-                    right_gaze_data.append(right_data)
+            if not self.is_debug:
+                for calibration_point in self.calibration_result.calibration_points:
+                    for calibration_samples in calibration_point._CalibrationPoint__calibration_samples:
+                        left_data = calibration_samples._CalibrationSample__left_eye._CalibrationEyeData__position_on_display_area
+                        right_data = calibration_samples._CalibrationSample__right_eye._CalibrationEyeData__position_on_display_area
+                        left_gaze_data.append(left_data)
+                        right_gaze_data.append(right_data)
             self.calibration_finish.emit(left_gaze_data, right_gaze_data)
             self.close()
 
@@ -133,7 +148,8 @@ class CalibrationWidget(QWidget):
 
 
 if __name__ == "__main__":
+    global_config.init()
     app = QApplication([])
     widget = CalibrationWidget()
-    widget.show()
+    widget.start_calibration()
     sys.exit(app.exec_())

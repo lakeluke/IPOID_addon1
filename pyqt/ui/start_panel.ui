@@ -39,7 +39,7 @@
        </font>
       </property>
       <property name="currentIndex">
-       <number>0</number>
+       <number>1</number>
       </property>
       <widget class="QWidget" name="tab_eyetracker">
        <attribute name="title">
@@ -317,7 +317,7 @@ QGroupBox:title {
            <item>
             <layout class="QHBoxLayout" name="hLayout_dir_select" stretch="2,8,1">
              <item>
-              <widget class="QLabel" name="label">
+              <widget class="QLabel" name="label_imgdb_dir">
                <property name="font">
                 <font>
                  <pointsize>14</pointsize>
@@ -329,7 +329,7 @@ QGroupBox:title {
               </widget>
              </item>
              <item>
-              <widget class="QLineEdit" name="lineEdit">
+              <widget class="QLineEdit" name="lineEdit_imgdb_dir">
                <property name="enabled">
                 <bool>true</bool>
                </property>
@@ -342,7 +342,7 @@ QGroupBox:title {
               </widget>
              </item>
              <item>
-              <widget class="QPushButton" name="btnDirget">
+              <widget class="QPushButton" name="btn_getdir">
                <property name="enabled">
                 <bool>true</bool>
                </property>
@@ -377,7 +377,7 @@ QGroupBox:title {
             </layout>
            </item>
            <item>
-            <layout class="QHBoxLayout" name="hLayout_dir_apply" stretch="10,1">
+            <layout class="QHBoxLayout" name="hLayout_dir_apply" stretch="10,0">
              <item>
               <spacer name="horizontalSpacer_3">
                <property name="orientation">
@@ -392,26 +392,22 @@ QGroupBox:title {
               </spacer>
              </item>
              <item>
-              <layout class="QHBoxLayout" name="horizontalLayout_2">
-               <item>
-                <widget class="QPushButton" name="btnApply">
-                 <property name="sizePolicy">
-                  <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                   <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
-                  </sizepolicy>
-                 </property>
-                 <property name="font">
-                  <font>
-                   <pointsize>12</pointsize>
-                  </font>
-                 </property>
-                 <property name="text">
-                  <string>应用</string>
-                 </property>
-                </widget>
-               </item>
-              </layout>
+              <widget class="QPushButton" name="btn_imgdb_apply">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="font">
+                <font>
+                 <pointsize>12</pointsize>
+                </font>
+               </property>
+               <property name="text">
+                <string>应用</string>
+               </property>
+              </widget>
              </item>
             </layout>
            </item>
@@ -525,14 +521,14 @@ QGroupBox:title {
     <property name="title">
      <string>设置</string>
     </property>
-    <addaction name="action_frequency"/>
+    <addaction name="action_setting"/>
    </widget>
    <addaction name="menu"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
-  <action name="action_frequency">
+  <action name="action_setting">
    <property name="text">
-    <string>设置采样频率</string>
+    <string>设置实验参数</string>
    </property>
   </action>
   <action name="action_filter">
