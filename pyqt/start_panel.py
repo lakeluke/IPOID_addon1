@@ -11,6 +11,9 @@ import tobii_research as tr
 
 import global_config
 from ui.ui_start_panel import Ui_start_panel
+from calibration_widget import CalibrationWidget
+from calibration_result_widget import CalibrationResultWidget
+from setting_dialog import SettingDialog
 
 global_user_position_guide = []
 
@@ -23,8 +26,8 @@ def user_position_guide_callback(gaze_data):
 class EyePosShow(QWidget):
     def __init__(self, parent=None):
         super(EyePosShow, self).__init__(parent)
-        self.current_point_x = [0.5, 0.5, 0.5]
-        self.current_point_y = [0.5, 0.5, 0.5]
+        self.p_x = [0.5, 0.5, 0.5]
+        self.p_y = [0.5, 0.5, 0.5]
         self.current_rad = 10
         self.IsPainter = False
 
@@ -45,22 +48,22 @@ class EyePosShow(QWidget):
             rect2 = QRect(0, 0, self.width(), 0.9 * self.height())
             painter.fillRect(rect2, Qt.black)
             eye_find = 0
-            if math.isnan(self.current_point_x[0]) or math.isnan(self.current_point_x[1]):
+            if math.isnan(self.p_x[0]) or math.isnan(self.p_x[1]):
                 painter.fillRect(rect1, Qt.red)
             else:
-                relative_x = 1 - self.current_point_x[0]
-                relative_y = self.current_point_x[1]
+                relative_x = 1 - self.p_x[0]
+                relative_y = self.p_x[1]
                 if relative_x <= 1 and relative_y <= 1:
                     painter.drawEllipse(QPoint(relative_x * self.W, relative_y * self.H), self.current_rad,
                                         self.current_rad)
                     eye_find = eye_find + 1
                 else:
                     painter.fillRect(rect1, Qt.red)
-            if math.isnan(self.current_point_y[0]) or math.isnan(self.current_point_y[1]):
+            if math.isnan(self.p_y[0]) or math.isnan(self.p_y[1]):
                 painter.fillRect(rect1, Qt.red)
             else:
-                relative_x = 1 - self.current_point_y[0]
-                relative_y = self.current_point_y[1]
+                relative_x = 1 - self.p_y[0]
+                relative_y = self.p_y[1]
                 if relative_x <= 1 and relative_y <= 1:
                     painter.drawEllipse(QPoint(relative_x * self.W, relative_y * self.H), self.current_rad,
                                         self.current_rad)
@@ -81,21 +84,25 @@ class StartPanel(QMainWindow):
         self.eye_show = EyePosShow(self.ui.widget_eyepos)
         self.eye_show.setObjectName("eye_show")
         self.timer = QTimer()
+
+        self.calibration_widget = CalibrationWidget(self)
+        self.calibration_result = CalibrationResultWidget(self)
+        self.setting_dialog = SettingDialog(self)
         # init some params
-        self.__isCalibration = False
+        self.isCalibrated = False
         self.eyetracker_frequency = global_config.get_value('eyetracker', 'frequency', 60)
         self.mode = global_config.config_params['mode']
 
-
-
     def init_connections(self):
+        self.calibration_widget.calibration_finish.connect(self.calibration_result.do_draw_eye_data)
+        self.setting_dialog.setting_changed.connect(self.do_setting_config)
         pass
 
     # custom signals
     begin_test = Signal(str, str)
 
     # custom slots
-    @Slot
+    @Slot()
     def on_btn_start_eyetracker_clicked(self):
         self.eyetrackers = tr.find_all_eyetrackers()
         if not self.eyetrackers:
@@ -124,28 +131,61 @@ class StartPanel(QMainWindow):
             self.timer.start()
             self.ui.btn_calibration.setEnabled(True)
 
-            # other methods
-
-    @Slot
+    @Slot()
     def on_btn_calibration_clicked(self):
         # query whether to enter calibration
         query_result = QMessageBox.question(self, '提示', '是否开始校准？',
-                                            QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel, QMessageBox.No)
+                                            QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
         if (query_result == QMessageBox.Yes):
-            if self.__isCalibration == False:
-                self.__Calibration_panel = Qmycalibration_panel(self)
-                self.__Calibration_panel.OneCalibrationFinish.connect(self.OneCalibrationFinish)
-                self.__isCalibration = True
-            self.__Calibration_panel.eyetracker = self.eyetracker
+            self.calibration_widget.eyetracker = self.eyetracker
             # self.eyetracker.unsubscribe_from(tr.EYETRACKER_USER_POSITION_GUIDE, user_position_guide_callback)
             self.timer.stop()
-            self.__Calibration_panel.currentpoint = 0
-            self.__Calibration_panel.point_Show.current_point_x = 0.5
-            self.__Calibration_panel.point_Show.current_point_y = 0.5
-            self.__Calibration_panel.point_Show.current_rad = 0
-            self.__Calibration_panel.timer.start()
-            self.__Calibration_panel.showFullScreen()
-            self.__Calibration_panel.calibration_step()
+            self.calibration_widget.current_point = 0
+            self.calibration_widget.point_show.p_x = 0.5
+            self.calibration_widget.point_show.p_y = 0.5
+            self.calibration_widget.point_show.current_rad = 0
+            self.calibration_widget.timer.start()
+            self.calibration_widget.showFullScreen()
+            self.calibration_widget.calibration_step()
+            if self.isCalibrated == False:
+                self.isCalibrated = True
+
+    @Slot()
+    def do_timer_timeout(self):
+        if global_user_position_guide:
+            left_data = global_user_position_guide['left_user_position']
+            right_data = global_user_position_guide['right_user_position']
+            self.eye_show.p_x = left_data
+            self.eye_show.p_y = right_data
+            self.eye_show.update()
+            left_z = 0
+            right_z = 0
+            if not math.isnan(left_data[2]):
+                left_z = left_data[2] * (self.z5 - self.z1) + self.z1
+            if not math.isnan(right_data[2]):
+                right_z = right_data[2] * (self.z5 - self.z1) + self.z1
+            distance = int(0.5 * (left_z + right_z) / 10)
+            if distance < 45:
+                self.ui.pgb_v.setValue(45)
+                self.ui.distance.setText(str(45))
+            elif distance > 75:
+                self.ui.pgb_v.setValue(75)
+                self.ui.distance.setText(str(75))
+            else:
+                self.ui.pgb_v.setValue(distance)
+                self.ui.distance.setText(str(distance))
+    @Slot()
+    def on_action_frequency_triggered(self):
+        self.setting_dialog.show()
+
+    @Slot(dict)
+    def do_setting_config(self,settings):
+        for setting in settings:
+            pass
+
+
+    # other methods
+
 
 if __name__ == "__main__":
     app = QApplication([])

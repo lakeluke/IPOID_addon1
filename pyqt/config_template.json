@@ -1,0 +1,1 @@
+{"eyetracker": {"frequency": 60}, "database": {"path": "./imgdb"}, "data": {"path": "./outdata"}, "log": {"path": "./log"}, "mode": {"debug": false, "ignore_no_eyetracker": false, "skip_eyetracker_calibration": false, "ignore_eyedata_error": false}}

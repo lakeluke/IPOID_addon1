@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>846</width>
+    <width>848</width>
     <height>606</height>
    </rect>
   </property>
@@ -27,18 +27,14 @@
   </property>
   <widget class="QWidget" name="centralwidget">
    <property name="font">
-    <font>
-     <family>Arial</family>
-    </font>
+    <font/>
    </property>
    <layout class="QVBoxLayout" name="verticalLayout">
     <item>
      <widget class="QTabWidget" name="tabWidget_prepare">
       <property name="font">
        <font>
-        <family>Arial</family>
         <pointsize>13</pointsize>
-        <weight>50</weight>
         <bold>false</bold>
        </font>
       </property>
@@ -78,9 +74,7 @@
              </property>
              <property name="font">
               <font>
-               <family>Arial</family>
                <pointsize>11</pointsize>
-               <weight>75</weight>
                <bold>true</bold>
               </font>
              </property>
@@ -112,9 +106,7 @@
             <widget class="QPushButton" name="btn_start_eyetracker">
              <property name="font">
               <font>
-               <family>Arial</family>
                <pointsize>16</pointsize>
-               <weight>50</weight>
                <bold>false</bold>
               </font>
              </property>
@@ -174,19 +166,6 @@
                </property>
               </widget>
              </item>
-             <item row="1" column="1">
-              <spacer name="hSpacer">
-               <property name="orientation">
-                <enum>Qt::Horizontal</enum>
-               </property>
-               <property name="sizeHint" stdset="0">
-                <size>
-                 <width>25</width>
-                 <height>25</height>
-                </size>
-               </property>
-              </spacer>
-             </item>
              <item row="0" column="0">
               <widget class="QWidget" name="widget_eyepos" native="true">
                <property name="sizePolicy">
@@ -219,6 +198,31 @@
                </property>
               </widget>
              </item>
+             <item row="1" column="1">
+              <widget class="QLabel" name="distance">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="font">
+                <font>
+                 <pointsize>13</pointsize>
+                 <bold>false</bold>
+                </font>
+               </property>
+               <property name="layoutDirection">
+                <enum>Qt::LeftToRight</enum>
+               </property>
+               <property name="text">
+                <string>60</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+              </widget>
+             </item>
             </layout>
            </item>
            <item>
@@ -241,9 +245,7 @@
             <widget class="QPushButton" name="btn_calibration">
              <property name="font">
               <font>
-               <family>Arial</family>
                <pointsize>16</pointsize>
-               <weight>50</weight>
                <bold>false</bold>
               </font>
              </property>
@@ -284,9 +286,7 @@
           </property>
           <property name="font">
            <font>
-            <family>黑体</family>
             <pointsize>-1</pointsize>
-            <weight>50</weight>
             <italic>false</italic>
             <bold>false</bold>
            </font>
@@ -478,9 +478,7 @@ QGroupBox:title {
         </property>
         <property name="font">
          <font>
-          <family>Arial</family>
           <pointsize>16</pointsize>
-          <weight>75</weight>
           <bold>true</bold>
           <underline>false</underline>
           <stylestrategy>PreferAntialias</stylestrategy>
@@ -519,7 +517,7 @@ QGroupBox:title {
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>846</width>
+     <width>848</width>
      <height>22</height>
     </rect>
    </property>

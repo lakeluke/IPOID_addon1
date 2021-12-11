@@ -2,7 +2,7 @@ import sys
 import time
 from PySide6.QtCore import Qt, QTimer, QPoint, Signal, Slot
 from PySide6.QtWidgets import QApplication, QWidget, QGridLayout, QMessageBox
-from PySide6.QtGui import QPainter, QPen, QBrush, QPixmap
+from PySide6.QtGui import QPainter, QPen, QBrush
 
 import tobii_research as tr
 
@@ -46,28 +46,31 @@ class CalibrationWidget(QWidget):
         self.init_ui()
         self.init_calibration_params()
         self.resolution = (1920, 1080)
+
         self.timer = QTimer()
         self.timer.stop()
         self.timer.setInterval(100)
         self.timer.timeout.connect(self.do_timer_timeout)
         self.timer.start()
+
         self.current_point = 0
         self.current_timer = 0
         self.eyetracker = None
 
     # custom signals
-    OneCalibrationFinish = Signal(list, list)
+    calibration_finish = Signal(list, list)
 
+    # init methods
     def init_ui(self):
         self.setObjectName(u"calibration_widget")
-        self.resize(self.resolution)
+        self.resize(self.resolution[0],self.resolution[1])
         self.main_layout = QGridLayout(self)
         self.main_layout.setContentsMargins(0, 0, 0, 0)
         self.main_layout.setSpacing(0)
         self.main_layout.setObjectName(u'main_layout')
         self.point_show = PointShow(self)
         self.setContentsMargins(0,0,0,0)
-        self.point_show.setObjectName("point_show")
+        self.point_show.setObjectName(u"point_show")
         self.point_show.setStyleSheet("background-color:#808080")
 
     def init_calibration_params(self):
@@ -97,7 +100,7 @@ class CalibrationWidget(QWidget):
 
     @Slot
     def do_timer_timeout(self):
-        if self.current_point < 5:
+        if self.current_point < self.calibration_point_number:
             self.point_show.p_x = self.calibration_point_list[self.current_point][0]
             self.point_show.p_y = self.calibration_point_list[self.current_point][1]
             self.point_show.p_rad = 40.0 - self.current_timer * 4.0
@@ -121,7 +124,7 @@ class CalibrationWidget(QWidget):
                     right_data = calibration_samples._CalibrationSample__right_eye._CalibrationEyeData__position_on_display_area
                     left_gaze_data.append(left_data)
                     right_gaze_data.append(right_data)
-            self.OneCalibrationFinish.emit(left_gaze_data, right_gaze_data)
+            self.calibration_finish.emit(left_gaze_data, right_gaze_data)
             self.close()
 
     def keyReleaseEvent(self, event):
