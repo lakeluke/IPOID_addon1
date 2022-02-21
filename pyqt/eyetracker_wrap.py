@@ -11,12 +11,12 @@ class EyeTrackerWrapper:
     def find_eyetrackers():
         eyetrackers = tr.find_all_eyetrackers()
         return eyetrackers
-    
+
     @staticmethod
     def get_system_time_stamp():
         system_time_stamp = tr.get_system_time_stamp()
-        return system_time_stamp    
-    
+        return system_time_stamp
+
     def __init__(self, address='tet-tcp://'):
         address_pattern = 'tet-tcp://((([0-9]{1,3})\.){3}([0-9]{1,3}))'
         if re.match(address_pattern, address):
@@ -51,15 +51,17 @@ class EyeTrackerWrapper:
     def frequency_options(self):
         if self.eyetracker:
             return self.eyetracker.get_all_gaze_output_frequencies()
-    
+        else:
+            return (60, 120, 250, 300)
+
     def get_frequency(self):
         if self.eyetracker:
             return self.eyetracker.get_gaze_output_frequency()
-        
-    def set_frequency(self,frequency=60):
+
+    def set_frequency(self, frequency=60):
         if self.eyetracker:
             self.eyetracker.set_gaze_output_frequency(frequency)
-    
+
     def calibration_start(self):
         if self.eyetracker:
             self.calibration = tr.ScreenBasedCalibration(self.eyetracker)
@@ -98,12 +100,13 @@ class EyeTrackerWrapper:
 
     def get_current_gaze_data(self):
         return self.current_gaze_data
-    
+
     def gaze_data_callback(self, gaze_data):
         self.current_gaze_data = gaze_data
         if not len(gaze_data):
             logging.error('gaze_data is null')
-        elif gaze_data['left_gaze_point_validity'] or gaze_data['right_gaze_point_validity']:
+        elif gaze_data['left_gaze_point_validity'] or gaze_data[
+                'right_gaze_point_validity']:
             self.gaze_data.append(gaze_data)
 
     def subscribe_gaze_data(self, ):
@@ -111,18 +114,18 @@ class EyeTrackerWrapper:
         if self.eyetracker:
             try:
                 self.eyetracker.subscribe_to(tr.EYETRACKER_GAZE_DATA,
-                                            self.gaze_data_callback,
-                                            as_dictionary=True)
+                                             self.gaze_data_callback,
+                                             as_dictionary=True)
             except:
                 self.unsubscribe_gaze_data()
                 self.eyetracker.subscribe_to(tr.EYETRACKER_GAZE_DATA,
-                                            self.gaze_data_callback,
-                                            as_dictionary=True)
+                                             self.gaze_data_callback,
+                                             as_dictionary=True)
 
     def unsubscribe_gaze_data(self):
         if self.eyetracker:
             self.eyetracker.unsubscribe_from(tr.EYETRACKER_GAZE_DATA,
-                                            self.gaze_data_callback)
+                                             self.gaze_data_callback)
             return self.gaze_data
 
     def user_position_guide_callback(self, user_position):
@@ -132,26 +135,27 @@ class EyeTrackerWrapper:
         self.user_position = {}
         if self.eyetracker:
             try:
-                self.eyetracker.subscribe_to(tr.EYETRACKER_USER_POSITION_GUIDE, 
-                                            self.user_position_guide_callback,
-                                            as_dictionary=True)
+                self.eyetracker.subscribe_to(tr.EYETRACKER_USER_POSITION_GUIDE,
+                                             self.user_position_guide_callback,
+                                             as_dictionary=True)
             except:
                 self.unsubscribe_user_position()
-                self.eyetracker.subscribe_to(tr.EYETRACKER_USER_POSITION_GUIDE, 
-                                            self.user_position_guide_callback,
-                                            as_dictionary=True)
+                self.eyetracker.subscribe_to(tr.EYETRACKER_USER_POSITION_GUIDE,
+                                             self.user_position_guide_callback,
+                                             as_dictionary=True)
 
-    def unsubscribe_user_position(self):    
+    def unsubscribe_user_position(self):
         if self.eyetracker:
-            self.eyetracker.unsubscribe_from(tr.EYETRACKER_USER_POSITION_GUIDE, 
+            self.eyetracker.unsubscribe_from(tr.EYETRACKER_USER_POSITION_GUIDE,
                                              self.user_position_guide_callback)
-            
+
     def get_user_position(self):
         return self.user_position
-        
+
     def get_track_box(self):
         if self.eyetracker:
             return self.eyetracker.get_track_box()
+
 
 if __name__ == '__main__':
     eyetracker_wp = EyeTrackerWrapper()
@@ -160,16 +164,14 @@ if __name__ == '__main__':
     time.sleep(1)
     eyetracker_wp.unsubscribe_gaze_data()
     gaze_data = eyetracker_wp.get_gaze_data()
-    print(str(len(gaze_data))+'@')
+    print(str(len(gaze_data)) + '@')
     print(gaze_data[-1])
-    
+
     eyetracker_wp.subscribe_user_position()
     user_position = eyetracker_wp.get_user_position()
     print(user_position)
     time.sleep(2)
     eyetracker_wp.unsubscribe_user_position()
-    
-    
 
     print(eyetracker_wp.eyetracker.device_capabilities)
     print(eyetracker_wp.eyetracker.get_all_gaze_output_frequencies())
