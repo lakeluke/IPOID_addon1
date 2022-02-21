@@ -1,3 +1,15 @@
 {
-    "files": ["startpanel.py","ui/frequency_setting.ui","ui/start_panel.ui","ui/dialog.ui","ui/info_dialog.ui","ui/calibration_panel.ui","ui/calibration_result.ui","appmain.py","global_config.py","info_dialog.py","start_panel.py"]
+    "files": [  "application_main.py",
+                "start_panel.py",
+                "info_dialog.py",
+                "setting_dialog.py",
+                "calibration_widget.py",
+                "calibration_result_widget.py",
+                "image_show_widget.py",
+                "global_config.py",
+                "eyetracker_wrap.py",
+                "ui/info_dialog.ui",
+                "ui/setting_dialog.ui",
+                "ui/start_panel.ui"
+    ]
 }

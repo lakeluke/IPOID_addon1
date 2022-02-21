@@ -1,12 +1,12 @@
+# !/usr/bin/python3
+# -*- coding: utf-8 -*-
 import sys
 import time
 from PySide6.QtCore import Qt, QTimer, QPoint, Signal, Slot
 from PySide6.QtWidgets import QApplication, QWidget, QGridLayout, QMessageBox
 from PySide6.QtGui import QPainter, QPen, QBrush
-
-import tobii_research as tr
-
 import global_config
+
 
 
 def gaze_data_callback(gaze_data):
@@ -40,25 +40,24 @@ class PointShow(QWidget):
 
 
 class CalibrationWidget(QWidget):
-
+    # custom signals
+    calibration_finish = Signal(list,list)
+    
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.eyetracker = None
         self.resolution = (1920, 1080)
-        self.is_debug = global_config.get_value('mode', 'debug', False)
-        self.refresh_interval_ms = 100
-        self.point_show_time_refresh = 10
-        self.point_show_calibration_time_refresh = 5
-        self.point_show_interval_refresh = 2
-        self.current_point = 0
-        self.current_timer = 0
+        self.refresh_interval_ms = 40
+        self.point_show_time_ms = 1000
+        self.point_show_calibration_time_ms = 500
+        self.point_show_interval_ms = 200
+        self.refresh_num_each_point = int(self.point_show_time_ms/self.refresh_interval_ms) 
+        self.refresh_num_each_calibration = int(self.point_show_calibration_time_ms/self.refresh_interval_ms) 
+        
         self.init_ui()
         self.init_calibration_params()
         self.init_timer()
-
-    # custom signals
-    calibration_finish = Signal(list, list)
-
+        
+    
     # init methods
     def init_ui(self):
         self.setObjectName(u"calibration_widget")
@@ -75,24 +74,25 @@ class CalibrationWidget(QWidget):
         self.main_layout.addWidget(self.point_show)
 
     def init_calibration_params(self):
-        self.calibration_point_number = global_config.get_value('eyetracker', 'calibration_point_number',5)
-        if self.calibration_point_number == 5:
-            self.calibration_point_list = [(0.1, 0.1), (0.9, 0.1), (0.5, 0.5), (0.1, 0.9), (0.9, 0.9)]
-        elif self.calibration_point_number == 9:
-            self.calibration_point_list = [(0.1, 0.1), (0.5, 0.1), (0.9, 0.1),
-                                           (0.1, 0.5), (0.5, 0.5), (0.9, 0.5),
-                                           (0.1, 0.9), (0.5, 0.9), (0.9, 0.9)]
-        elif self.calibration_point_number == 13:
-            self.calibration_point_list = [(0.1, 0.1), (0.5, 0.1), (0.9, 0.1),
-                                           (0.3, 0.3), (0.7, 0.3),
-                                           (0.1, 0.5), (0.5, 0.5), (0.9, 0.5),
-                                           (0.3, 0.7), (0.7, 0.7),
-                                           (0.1, 0.9), (0.5, 0.9), (0.9, 0.9)]
+        self.calibration_point_number = global_config.get_value('eyetracker', 'calibration_point_number',9)
+        calibration_point_dict = {
+            5: [(0.1, 0.1), (0.9, 0.1), (0.5, 0.5), (0.1, 0.9), (0.9, 0.9)],
+            9: [(0.1, 0.1), (0.5, 0.1), (0.9, 0.1),
+                (0.1, 0.5), (0.5, 0.5), (0.9, 0.5),
+                (0.1, 0.9), (0.5, 0.9), (0.9, 0.9)],
+            13: [(0.1, 0.1), (0.5, 0.1), (0.9, 0.1),
+                (0.3, 0.3), (0.7, 0.3),
+                (0.1, 0.5), (0.5, 0.5), (0.9, 0.5),
+                (0.3, 0.7), (0.7, 0.7),
+                (0.1, 0.9), (0.5, 0.9), (0.9, 0.9)]
+        }
+        if self.calibration_point_number in calibration_point_dict.keys():
+            self.calibration_point_list = calibration_point_dict[self.calibration_point_number]    
         else:
             QMessageBox.warning(self, '警告', '配置参数calibration_point_number错误！\n '
                                               '必须为5, 9, 13三个值之一\n'
                                               '此参数将被设置为默认值5')
-            self.calibration_point_list = [(0.1, 0.1), (0.9, 0.1), (0.5, 0.5), (0.1, 0.9), (0.9, 0.9)]
+            self.calibration_point_list = calibration_point_dict[5]
 
     def init_timer(self):
         self.timer = QTimer()
@@ -102,49 +102,74 @@ class CalibrationWidget(QWidget):
 
     @Slot()
     def start_calibration(self):
-        self.timer.start()
-        self.showFullScreen()
-        if self.is_debug:
-            QMessageBox.information(self,u'调试模式',u'未发现眼动仪，仅演示显示效果！')
+        self.eyetracker_wrap = global_config.eyetracker_wrapper
+        self.is_debug = global_config.get_value('mode', 'debug', False)
+        self.current_point = 0
+        self.current_refresh = 0
+        if not self.eyetracker_wrap.eyetracker:
+            if self.is_debug:
+                QMessageBox.information(self,u'调试模式',u'未发现眼动仪，仅演示显示效果！')
+            else:
+                QMessageBox.information(self,u'矫正开启错误',u'未发现眼动仪，请检查连接')
         else:
-            self.calibration = tr.ScreenBasedCalibration(self.eyetracker)
-            self.calibration.enter_calibration_mode()
+            self.eyetracker_wrap.calibration_start()
+        self.showFullScreen()
+        self.timer.start()
 
     @Slot()
     def do_timer_timeout(self):
         if self.current_point < self.calibration_point_number:
             self.point_show.p_x = self.calibration_point_list[self.current_point][0]
             self.point_show.p_y = self.calibration_point_list[self.current_point][1]
-            self.point_show.p_rad = 40.0 - self.current_timer * 4.0
+            self.point_show.p_rad = 40.0 * (1-self.current_refresh/self.refresh_num_each_point)
             self.point_show.update()
-            if self.current_timer == self.point_show_time_refresh-self.point_show_calibration_time_refresh:
-                if not self.is_debug:
-                    self.calibration.collect_data(self.point_show.p_x, self.point_show.p_y)
+            if self.current_refresh == self.refresh_num_each_point-self.refresh_num_each_calibration:
                 time.sleep(0.5)
-            self.current_timer = self.current_timer + 1
-            if self.current_timer == self.point_show_time_refresh:
+                if self.eyetracker_wrap.eyetracker:
+                    self.eyetracker_wrap.calibration_collect((self.point_show.p_x, self.point_show.p_y)) 
+            self.current_refresh = self.current_refresh + 1
+            if self.current_refresh >= self.refresh_num_each_point:
                 self.current_point = self.current_point + 1
-                self.current_timer = 0
+                self.current_refresh = 0
         else:
             self.timer.stop()
-            if not self.is_debug:
-                self.calibration_result = self.calibration.compute_and_apply()
-                self.calibration.leave_calibration_mode()
-            left_gaze_data = []
-            right_gaze_data = []
-            if not self.is_debug:
-                for calibration_point in self.calibration_result.calibration_points:
-                    for calibration_samples in calibration_point._CalibrationPoint__calibration_samples:
-                        left_data = calibration_samples._CalibrationSample__left_eye._CalibrationEyeData__position_on_display_area
-                        right_data = calibration_samples._CalibrationSample__right_eye._CalibrationEyeData__position_on_display_area
-                        left_gaze_data.append(left_data)
-                        right_gaze_data.append(right_data)
-            self.calibration_finish.emit(left_gaze_data, right_gaze_data)
+            self.calibration_result = None
+            if self.eyetracker_wrap.eyetracker:
+                self.calibration_result = self.eyetracker_wrap.calibration_apply()
+                self.eyetracker_wrap.calibration_end()
             self.close()
+            self.process_calibration_result()
 
+    def process_calibration_result(self):
+        calibration_sample_list = ()
+        if self.calibration_result:
+            calibration_status = self.calibration_result.status
+            if calibration_status != 'calibration_status_success':
+                qresult = QMessageBox.question(self,'矫正失败','矫正状态：%s \n 是否重新矫正？'%calibration_status,
+                                     QMessageBox.Yes|QMessageBox.No)
+                if qresult == QMessageBox.Yes:
+                    self.start_calibration()
+                    return
+            left_samples = []
+            right_samples = []
+            for calibration_point in self.calibration_result.calibration_points:
+                for calibration_sample in calibration_point.calibration_samples:
+                    left_sample = (calibration_sample.left_eye.position_on_display_area + 
+                                (calibration_sample.left_eye.validity,) )
+                    right_sample = (calibration_sample.right_eye.position_on_display_area + 
+                                (calibration_sample.right_eye.validity,) )
+                    left_samples.append(left_sample)
+                    right_samples.append(right_sample)
+            calibration_sample_list = [left_samples,right_samples]
+        self.calibration_finish.emit(self.calibration_point_list, calibration_sample_list)    
+                    
+         
     def keyReleaseEvent(self, event):
         if event.key() == Qt.Key_Q:
+            self.timer.stop()
             self.close()
+            self.eyetracker_wrap.calibration_end()
+            self.calibration_finish.emit(self.calibration_point_list,[[],[],'calibration_key_Q exit'])
 
 
 if __name__ == "__main__":

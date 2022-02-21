@@ -1,0 +1,20 @@
+{
+	'device_time_stamp': 1299737849396227,
+	'system_time_stamp': 15274989351,
+	'left_gaze_point_on_display_area': (0.5735054016113281, 0.8647428750991821),
+	'left_gaze_point_in_user_coordinate_system': (37.767086029052734, 72.5835952758789, 15.864912033081055),
+	'left_gaze_point_validity': 1,
+	'left_pupil_diameter': 3.9438934326171875,
+	'left_pupil_validity': 1,
+	'left_gaze_origin_in_user_coordinate_system': (-37.49174118041992, 23.65452003479004, 580.6107788085938),
+	'left_gaze_origin_in_trackbox_coordinate_system': (0.6857239603996277, 0.34070128202438354, 0.43536925315856934),
+	'left_gaze_origin_validity': 1,
+	'right_gaze_point_on_display_area': (0.5429048538208008, 0.8488193154335022),
+	'right_gaze_point_in_user_coordinate_system': (22.044519424438477, 76.86224365234375, 17.599620819091797),
+	'right_gaze_point_validity': 1,
+	'right_pupil_diameter': 3.9292755126953125,
+	'right_pupil_validity': 1,
+	'right_gaze_origin_in_user_coordinate_system': (28.822935104370117, 23.725046157836914, 585.638671875),
+	'right_gaze_origin_in_trackbox_coordinate_system': (0.4511508643627167, 0.3449838161468506, 0.45212891697883606),
+	'right_gaze_origin_validity': 1
+}

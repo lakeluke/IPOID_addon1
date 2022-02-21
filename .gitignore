@@ -1,0 +1,15 @@
+cpp/build*
+cpp/*.pro.user
+pyqt/imgdb
+pyqt/testdb
+pyqt/outdata
+pyqt/build
+pyqt/dist
+pyqt/*.spec
+**/__pycache__
+**/.idea
+**/.vscode
+
+
+
+

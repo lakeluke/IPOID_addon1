@@ -116,6 +116,10 @@ class Ui_start_panel(object):
         sizePolicy1.setVerticalStretch(6)
         sizePolicy1.setHeightForWidth(self.widget_eyepos.sizePolicy().hasHeightForWidth())
         self.widget_eyepos.setSizePolicy(sizePolicy1)
+        self.widget_eyepos_layout = QGridLayout(self.widget_eyepos)
+        self.widget_eyepos_layout.setSpacing(0)
+        self.widget_eyepos_layout.setObjectName(u"widget_eyepos_layout")
+        self.widget_eyepos_layout.setContentsMargins(0, 0, 0, 0)
 
         self.gLayout_eyepos.addWidget(self.widget_eyepos, 0, 0, 1, 1)
 
@@ -321,7 +325,7 @@ class Ui_start_panel(object):
 
         self.retranslateUi(start_panel)
 
-        self.tabWidget_prepare.setCurrentIndex(1)
+        self.tabWidget_prepare.setCurrentIndex(0)
 
 
         QMetaObject.connectSlotsByName(start_panel)

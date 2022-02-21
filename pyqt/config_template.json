@@ -1,1 +1,0 @@
-{"eyetracker": {"frequency": 60, "calibration_point_number": 9}, "database": {"path": "./imgdb"}, "data": {"path": "./outdata"}, "log": {"path": "./log"}, "image_show": {"last_time": 10, "time_interval": 3}, "mode": {"debug": false, "ignore_no_eyetracker": false, "skip_eyetracker_calibration": false, "ignore_eyedata_error": false}}
