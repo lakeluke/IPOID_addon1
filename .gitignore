@@ -1,5 +1,6 @@
 cpp/build*
 cpp/*.pro.user
+cpp/ui/include
 pyqt/imgdb
 pyqt/testdb
 pyqt/outdata

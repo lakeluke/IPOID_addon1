@@ -1,14 +1,12 @@
 #ifndef IMAGESHOWWIDGET_H
 #define IMAGESHOWWIDGET_H
 #include "myconfig.h"
-#include <QWidget>
 #include <QLabel>
-
-typedef struct{
-    int x;
-    int y;
-} MyPoint2D;
-
+#include <QTimer>
+#include <QWidget>
+#include <array>
+typedef std::array<int, 2> MyPoint2D;
+extern MyConfig global_config;
 class ImageShowWidget : public QWidget
 {
     Q_OBJECT
@@ -20,7 +18,7 @@ public:
     void load_config();
     void load_images();
     void subscribe_eye_data();
-    void save_eye_data();
+    void save_eye_data(const QString &);
 
 signals:
     void eye_detection_error(QString);
@@ -29,25 +27,54 @@ signals:
     void experiment_finished();
 
 public slots:
-    void begin_test(const QString& participant_id);
-    void continue_test(const QString& participant_id);
-    void pause(const QString& str);
+    void begin_test(const QString &participant_id);
+    void continue_test(const QString &participant_id);
+    void pause(const QString &str);
 
 private slots:
     void do_timer_timeout();
     void do_error_detection();
 
 private:
-    virtual void keyReleaseEvent(QKeyEvent*)override;
-    enum DisplayState{START=0,READY=1,IMAGE=2,ERROR=3,FINISH=4};
-    DisplayState state;
+    virtual void keyReleaseEvent(QKeyEvent *) override;
+    enum DisplayState
+    {
+        START = 0,
+        READY = 1,
+        IMAGE = 2,
+        ERROR = 3,
+        FINISH = 4
+    };
+    uint state;
     int countdown;
     MyPoint2D resolution;
-    QLayout* image_layout;
-    QLabel* image_display;
-    QTimer* imgshow_timer;
-    QTimer* detect_error_timer;
-
+    QLayout *image_layout;
+    QLabel *image_display;
+    QTimer *imgshow_timer;
+    QTimer *detect_error_timer;
+    EyeTrackerWrapper *eyetracker_wrap;
+    // some const use config variables
+    int eyetracker_frequency;
+    int image_show_time;
+    int image_show_interval;
+    int detect_error_interval_ms;
+    int imgshow_timer_interval_ms;
+    int eye_detect_error_count;
+    bool is_debug;
+    QString dir_imgdb;
+    QString dir_out_data;
+    QList<QString> image_suffix;
+    // some image identify variables
+    uint image_num;
+    QList<QString> image_list;
+    uint cur_image_index;
+    QImage cur_image;
+    QPixmap cur_pixmap;
+    QString current_eye_data_file_name;
+    QString cur_image_name;
+    QString cur_image_file;
+    bool is_subscribed;
+    QString participant_id;
 };
 
 #endif // IMAGESHOWWIDGET_H

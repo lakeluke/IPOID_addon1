@@ -221,7 +221,7 @@ class ImageShowWidget(QWidget):
         current_gaze_data = self.eyetracker_wrap.get_current_gaze_data()
         if len(current_gaze_data) == 0 or (
             current_gaze_data["left_gaze_point_validity"] == 0
-            and current_gaze_data["left_gaze_point_validity"] == 0
+            and current_gaze_data["right_gaze_point_validity"] == 0
         ):
             self.eye_detect_error_count = self.eye_detect_error_count + 1
         else:

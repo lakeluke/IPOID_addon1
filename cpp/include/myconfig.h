@@ -6,9 +6,9 @@
 
 #include <QFile>
 #include <QHash>
-#include <QVariant>
-#include <QSettings>
 #include <QJsonObject>
+#include <QSettings>
+#include <QVariant>
 #include <QtDebug>
 class MyConfig
 {
@@ -16,14 +16,14 @@ public:
     MyConfig();
     MyConfig(const QString config_file_str);
     MyConfig(const QJsonObject config_in_qjson);
-    MyConfig(const MyConfig& other);
+    MyConfig(const MyConfig &other);
 
-    void load_eyetracker(const QString& address="");
-    void set_value(const QString& key,const QVariant value);
-    QVariant get_value(const QString& key,const QVariant default_value) const;
-    EyeTrackerWrapper* get_eyetracker_wrapper()const;
-    void dump(const QString& dump_file_name)const;
-    QJsonObject toQJsonObject()const;
+    void load_eyetracker(const QString &address = "");
+    void set_value(const QString &key, const QVariant value);
+    QVariant get_value(const QString &key, const QVariant default_value) const;
+    EyeTrackerWrapper *get_eyetracker_wrapper() const;
+    void dump(const QString &dump_file_name) const;
+    QJsonObject toQJsonObject() const;
 
     ~MyConfig();
 
@@ -33,7 +33,6 @@ private:
     EyeTrackerWrapper *eyetracker_wrapper;
 
     void default_init();
-
 };
 
 #endif // MYCONFIG_H

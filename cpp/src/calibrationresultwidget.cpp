@@ -3,5 +3,4 @@
 CalibrationResultWidget::CalibrationResultWidget(QWidget *parent)
     : QWidget{parent}
 {
-
 }
