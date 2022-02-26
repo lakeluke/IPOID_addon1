@@ -24,9 +24,12 @@ int main(int argc, char *argv[])
         }
     }
 
-    InfoDialog info_dialog;
-    info_dialog.show();
-    // StartPanel start_panel;
-    // QObject::connect(&info_dialog,SIGNAL(begin_setting(std::string)),&start_panel,SLOT(begin_setting(std::string)));
-    return app.exec();
+    InfoDialog *info_dialog = new InfoDialog();
+    info_dialog->show();
+    StartPanel *start_panel = new StartPanel();
+    QObject::connect(info_dialog,SIGNAL(begin_setting(QString)),start_panel,SLOT(begin_setting(QString)));
+    int ret_code = app.exec();
+    delete info_dialog;
+    delete start_panel;
+    return ret_code;
 }

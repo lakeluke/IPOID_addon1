@@ -11,14 +11,13 @@
 #include <QPainter>
 #include <QTimer>
 #include <array>
+
+extern MyConfig global_config;
+
 namespace Ui
 {
     class StartPanel;
 }
-
-extern MyConfig global_config;
-typedef std::array<float, 3> MyFPoint3D;
-
 class StartPanel : public QMainWindow
 {
     Q_OBJECT
@@ -38,8 +37,8 @@ private:
 
 signals:
     void start_calibration();
-    void begin_test(const QString &);
-    void continue_test(const QString &);
+    void begin_test(QString);
+    void continue_test(QString);
 
 public slots:
     void on_action_setting_triggered();
@@ -48,7 +47,7 @@ public slots:
     void on_btn_getdir_clicked();
     void on_btn_imgdb_apply_clicked();
     void on_btn_start_clicked();
-    void begin_setting(const QString &participant_id);
+    void begin_setting(QString);
     void do_timer_timeout();
     void solve_calibration_end();
     void solve_eye_detection_error();

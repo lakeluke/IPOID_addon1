@@ -1,12 +1,17 @@
 #ifndef IMAGESHOWWIDGET_H
 #define IMAGESHOWWIDGET_H
+#include "eyetrackerwrapper.h"
 #include "myconfig.h"
+#include "mytypedef.h"
 #include <QLabel>
 #include <QTimer>
 #include <QWidget>
 #include <array>
-typedef std::array<int, 2> MyPoint2D;
+
 extern MyConfig global_config;
+
+void gaze_data_callback(TobiiResearchGazeData *tr_gaze_data, void *user_data);
+
 class ImageShowWidget : public QWidget
 {
     Q_OBJECT
@@ -24,12 +29,12 @@ signals:
     void eye_detection_error(QString);
     void experiment_error(QString);
     void experiment_pause(QString);
-    void experiment_finished();
+    void experiment_finished(QString);
 
 public slots:
-    void begin_test(const QString &participant_id);
-    void continue_test(const QString &participant_id);
-    void pause(const QString &str);
+    void begin_test(QString);
+    void continue_test(QString);
+    void pause(QString);
 
 private slots:
     void do_timer_timeout();

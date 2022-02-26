@@ -1,9 +1,7 @@
-#pragma execution_character_set("utf-8")
 #ifndef MYCONFIG_H
 #define MYCONFIG_H
 
 #include "eyetrackerwrapper.h"
-
 #include <QFile>
 #include <QHash>
 #include <QJsonObject>

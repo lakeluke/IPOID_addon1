@@ -2,14 +2,11 @@
 #define CALIBRATIONWIDGET_H
 
 #include "eyetrackerwrapper.h"
+#include "mytypedef.h"
 #include <QLayout>
 #include <QTimer>
 #include <QVector>
 #include <QWidget>
-#include <array>
-
-typedef std::array<int, 2> MyRes;
-typedef std::array<float, 2> MyFPoint2D;
 
 class CalibrationWidget : public QWidget
 {
@@ -25,13 +22,12 @@ private:
 
     public:
         void draw_circle(QPainter &);
-        float p_x;
-        float p_y;
+        MyFPoint2D p;
         int p_rad;
     };
 
 signals:
-    void calibration_finish();
+    void calibration_finish(TobiiResearchCalibrationResult*);
 
 public slots:
     void start_calibration();

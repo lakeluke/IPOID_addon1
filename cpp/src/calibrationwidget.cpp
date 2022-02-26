@@ -2,10 +2,34 @@
 #include "myconfig.h"
 #include <QKeyEvent>
 #include <QMessageBox>
+#include <QPainter>
 #include <chrono>
 #include <thread>
 
 extern MyConfig global_config;
+
+CalibrationWidget::PointShow::PointShow(QWidget *parent) : QWidget(parent)
+{
+    this->p = {0.5f, 0.5f};
+    p_rad = 0;
+};
+
+void CalibrationWidget::PointShow::paintEvent(QPaintEvent *event)
+{
+    QWidget::paintEvent(event);
+    QPainter painter;
+    painter.begin(this);
+    {
+        QPen pen(Qt::red, 1, Qt::SolidLine);
+        painter.setPen(pen);
+        QBrush brush(Qt::red, Qt::SolidPattern);
+        painter.setBrush(brush);
+        painter.drawEllipse(QPoint(this->p[0] * this->width(),
+                                   this->p[1] * this->height()),
+                            this->p_rad, this->p_rad);
+    }
+    painter.end();
+};
 
 CalibrationWidget::CalibrationWidget(QWidget *parent)
     : QWidget{parent}
@@ -38,7 +62,7 @@ void CalibrationWidget::init_ui()
     this->main_layout->setContentsMargins(0, 0, 0, 0);
     this->main_layout->setSpacing(0);
     this->main_layout->setObjectName("main_layout");
-    this->point_show = new PointShow(this);
+    this->point_show = new CalibrationWidget::PointShow(this);
     this->setContentsMargins(0, 0, 0, 0);
     this->point_show->setObjectName("point_show");
     this->point_show->setStyleSheet("background-color:#808080");
@@ -58,7 +82,7 @@ void CalibrationWidget::init_calibration_params()
         this->calibration_point_list = this->calibration_point_dict[this->calibration_point_number];
     else
     {
-        qDebug() << QString("配置参数calibration_point_number错误！\n "
+        qDebug() << tr("配置参数calibration_point_number错误！\n "
                             "必须为5, 9, 13三个值之一\n"
                             "此参数将被设置为默认值5");
         this->calibration_point_list = this->calibration_point_dict[5];
@@ -90,6 +114,7 @@ void CalibrationWidget::process_calibration_result()
                 return;
             }
         }
+
         QVector<TobiiResearchCalibrationEyeData> left_samples;
         /*
         right_samples = [];
@@ -108,7 +133,7 @@ void CalibrationWidget::process_calibration_result()
         calibration_sample_list = [ left_samples, right_samples ];
         */
     }
-    emit calibration_finish();
+    emit calibration_finish(this->calibration_result.mp_result);
 };
 
 void CalibrationWidget::start_calibration()
@@ -134,15 +159,15 @@ void CalibrationWidget::do_timer_timeout()
 {
     if (this->current_point < this->calibration_point_number)
     {
-        this->point_show->p_x = this->calibration_point_list[this->current_point][0];
-        this->point_show->p_y = this->calibration_point_list[this->current_point][1];
+        this->point_show->p[0] = this->calibration_point_list[this->current_point][0];
+        this->point_show->p[1] = this->calibration_point_list[this->current_point][1];
         this->point_show->p_rad = 40.0 * (1 - this->current_refresh / this->refresh_num_each_point);
         this->point_show->update();
         if (this->current_refresh == this->refresh_num_each_point - this->refresh_num_each_calibration)
         {
             std::this_thread::sleep_for(std::chrono::milliseconds(500));
             if (this->eyetracker_wrap->eyetracker)
-                this->eyetracker_wrap->calibration_collect(QPair<float, float>(this->point_show->p_x, this->point_show->p_y));
+                this->eyetracker_wrap->calibration_collect({this->point_show->p[0], this->point_show->p[1]});
         }
         this->current_refresh = this->current_refresh + 1;
         if (this->current_refresh >= this->refresh_num_each_point)

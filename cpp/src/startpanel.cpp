@@ -4,7 +4,6 @@
 #include <QFileDialog>
 #include <QMessageBox>
 #include <QtMath>
-
 StartPanel::EyePosShow::EyePosShow(QWidget *parent) : QWidget(parent)
 {
     this->eye_pos_adcs[0] = {0.5, 0.5, 0.5}; // left_eye_pos
@@ -107,14 +106,16 @@ StartPanel::~StartPanel()
 void StartPanel::init_connections()
 {
     connect(this->timer, SIGNAL(timeout()), this, SLOT(do_timer_timeout()));
-    connect(this, SIGNAL(start_calibration), this->calibration_widget, SLOT(start_calibration));
-    connect(this->calibration_widget, SIGNAL(calibration_finish), this->calibration_result, SLOT(draw_calibration_samples));
-    connect(this->calibration_widget, SIGNAL(calibration_finish), this, SLOT(solve_calibration_end));
-    connect(this, SIGNAL(begin_test), this->image_show_widget, SLOT(begin_test));
-    connect(this, SIGNAL(continue_test), this->image_show_widget, SLOT(continue_test));
-    connect(this->image_show_widget, SIGNAL(eye_detection_error), this, SLOT(solve_eye_detection_error));
-    connect(this->image_show_widget, SIGNAL(experiment_pause), this, SLOT(image_show_pause));
-    connect(this->image_show_widget, SIGNAL(experiment_finished), this, SLOT(finish_experiment));
+    connect(this, SIGNAL(start_calibration()), this->calibration_widget, SLOT(start_calibration()));
+    connect(this->calibration_widget, SIGNAL(calibration_finish(TobiiResearchCalibrationResult*)),
+            this->calibration_result, SLOT(draw_calibration_samples(TobiiResearchCalibrationResult*)));
+    connect(this->calibration_widget, SIGNAL(calibration_finish(TobiiResearchCalibrationResult*)),
+            this, SLOT(solve_calibration_end()));
+    connect(this, SIGNAL(begin_test(QString)), this->image_show_widget, SLOT(begin_test(QString)));
+    connect(this, SIGNAL(continue_test(QString)), this->image_show_widget, SLOT(continue_test(QString)));
+    connect(this->image_show_widget, SIGNAL(eye_detection_error(QString)), this, SLOT(solve_eye_detection_error()));
+    connect(this->image_show_widget, SIGNAL(experiment_pause(QString)), this, SLOT(image_show_pause()));
+    connect(this->image_show_widget, SIGNAL(experiment_finished(QString)), this, SLOT(finish_experiment()));
 };
 
 void StartPanel::on_action_setting_triggered()
@@ -203,15 +204,14 @@ void StartPanel::on_btn_imgdb_apply_clicked()
 
 void StartPanel::on_btn_start_clicked()
 {
-    QDir dir;
-    if (dir.exists(this->dir_imgdb))
+    QDir dir(this->dir_imgdb);
+    if (!dir.exists())
     {
-
-        QString msg = QString("数据库地址：%s 无效,请检查是否已应用").arg(this->dir_imgdb);
+        QString msg = QString("数据库地址：%1 无效,请检查是否已应用").arg(this->dir_imgdb);
         QMessageBox::warning(this, "警告", msg);
         return;
     }
-    if (!this->eyetracker_wrap->eyetracker)
+    if (!this->eyetracker_wrap->eyetracker){
         if (this->is_debug)
             QMessageBox::warning(this, "调试模式", "未检测到眼动仪设备，下面将只显示页面，不记录信息");
         else
@@ -219,6 +219,7 @@ void StartPanel::on_btn_start_clicked()
             QMessageBox::warning(this, "fatal error", "未检测到眼动仪设备，请检查连接");
             return;
         }
+    }
     if (!this->experiment_started)
     {
         this->experiment_started = true;
@@ -232,7 +233,7 @@ void StartPanel::on_btn_start_clicked()
     }
 };
 
-void StartPanel::begin_setting(const QString &participant_id)
+void StartPanel::begin_setting(QString participant_id)
 {
     this->participant_id = participant_id;
     this->show();

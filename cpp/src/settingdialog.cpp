@@ -18,16 +18,16 @@ SettingDialog::~SettingDialog()
 
 void SettingDialog::init_connections()
 {
-    connect(this, SIGNAL(settings_changed), this, SLOT(apply_setting));
+    connect(this, SIGNAL(settings_changed()), this, SLOT(apply_setting()));
 };
 
 void SettingDialog::set_eyetracker_frequency_options()
 {
     for (int i = 0; i < this->eyetracker_frequency_list.size(); ++i)
         this->ui->frequency_combobox->insertItem(
-            i, QString("%fHz").arg(this->eyetracker_frequency_list[i]));
+            i, QString("%1Hz").arg(this->eyetracker_frequency_list[i]));
     this->ui->frequency_combobox->setCurrentText(
-        QString("%fHz").arg(this->default_eyetracker_frequency));
+        QString("%1Hz").arg(this->default_eyetracker_frequency));
 };
 
 void SettingDialog::apply_setting()
@@ -43,7 +43,7 @@ void SettingDialog::apply_setting()
         eyetracker_wrapper->set_frequency(eyetracker_frequency);
     float current_frequency = eyetracker_wrapper->get_current_frequency();
     global_config.set_value("eyetracker/frequency", current_frequency);
-    qInfo() << QString("eyetracker %s frequency is set to %f").arg(EyeTrackerWrapper::get_eyetracker_info(eyetracker_wrapper->eyetracker)["serial_number"].toString()).arg(current_frequency);
+    qInfo() << QString("eyetracker %1 frequency is set to %2").arg(EyeTrackerWrapper::get_eyetracker_info(eyetracker_wrapper->eyetracker)["serial_number"].toString()).arg(current_frequency);
 };
 
 void SettingDialog::on_buttonBox_accepted()

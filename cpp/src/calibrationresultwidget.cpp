@@ -75,7 +75,6 @@ void CalibrationResultWidget::init_ui()
 
 void CalibrationResultWidget::draw_calibration_samples(TobiiResearchCalibrationResult *result)
 {
-
     QVector<MyFPoint2D> calibration_point_list;
     QVector<QVariantList> left_eye_data_list;
     QVector<QVariantList> right_eye_data_list;

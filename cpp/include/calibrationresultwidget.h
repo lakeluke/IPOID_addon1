@@ -1,6 +1,7 @@
 #ifndef CALIBRATIONRESULTWIDGET_H
 #define CALIBRATIONRESULTWIDGET_H
 
+#include "mytypedef.h"
 #include "tobii_research_calibration.h"
 #include <QFrame>
 #include <QLayout>
@@ -8,8 +9,7 @@
 #include <QVariantList>
 #include <QVector>
 #include <QWidget>
-#include <array>
-typedef std::array<float, 2> MyFPoint2D;
+
 class CalibrationResultWidget : public QWidget
 {
     Q_OBJECT
@@ -35,7 +35,7 @@ public:
     void init_ui();
 
 public slots:
-    void draw_calibration_samples(TobiiResearchCalibrationResult *);
+    void draw_calibration_samples(TobiiResearchCalibrationResult*);
 
 private:
     TobiiResearchCalibrationResult *calibration_result_ptr;

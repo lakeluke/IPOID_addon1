@@ -22,7 +22,6 @@ EyeTrackerWrapper::EyeTrackerWrapper()
         this->model = info["model"].toString();
         tobii_research_get_eyetracker(this->address.toLatin1().data(), &this->eyetracker);
         tobii_research_free_eyetrackers(eyetrackers);
-        this->clear_gaze_data();
         return;
     }
 CLEAR_EYETRACKER:
@@ -58,12 +57,11 @@ EyeTrackerWrapper::EyeTrackerWrapper(const QString &address)
             this->serial_number = info["serial_number"].toString();
             this->device_name = info["device_name"].toString();
             this->model = info["model"].toString();
-            this->clear_gaze_data();
         };
     }
     else
     {
-        qDebug() << QString("Given address: %s format invalid\n").arg(address)
+        qDebug() << QString("Given address: %1 format invalid\n").arg(address)
                  << QString("Use Default Constructor\n");
         new (this) EyeTrackerWrapper();
     };
@@ -76,16 +74,18 @@ void EyeTrackerWrapper::set_frequency(const float frequency)
         tobii_research_set_gaze_output_frequency(this->eyetracker, frequency);
     }
 };
+
 float EyeTrackerWrapper::get_current_frequency()
 {
     float current_frequency;
     if (this->eyetracker)
     {
-        TobiiResearchStatus status = tobii_research_get_gaze_output_frequency(this->eyetracker, &current_frequency);
+        tobii_research_get_gaze_output_frequency(this->eyetracker, &current_frequency);
         return current_frequency;
     }
     return -1;
 }
+
 QVector<float> EyeTrackerWrapper::get_frequency_options()
 {
     QVector<float> freq;
@@ -110,11 +110,11 @@ void EyeTrackerWrapper::calibration_start()
     }
 };
 
-void EyeTrackerWrapper::calibration_collect(const QPair<float, float> cpoint, bool recollect)
+void EyeTrackerWrapper::calibration_collect(const MyFPoint2D &cpoint, bool recollect)
 {
     if (eyetracker)
     {
-        TobiiResearchNormalizedPoint2D point = {cpoint.first, cpoint.second};
+        TobiiResearchNormalizedPoint2D point = {cpoint[0], cpoint[1]};
         if (recollect)
         {
             tobii_research_screen_based_calibration_discard_data(eyetracker, point.x, point.y);
@@ -161,91 +161,73 @@ void EyeTrackerWrapper::calibration_end()
 
 // gaze_data
 
-void EyeTrackerWrapper::subscribe_gaze_data()
+void EyeTrackerWrapper::subscribe_gaze_data(tobii_research_gaze_data_callback gaze_data_callback,
+                                            TobiiResearchGazeData &gaze_data)
 {
-    this->clear_gaze_data();
     if (eyetracker)
     {
         TobiiResearchStatus status = tobii_research_subscribe_to_gaze_data(eyetracker,
-                                                                           &EyeTrackerWrapper::gaze_data_callback,
-                                                                           &EyeTrackerWrapper::current_gaze_data);
+                                                                           gaze_data_callback,
+                                                                           &gaze_data);
         if (status != TOBII_RESEARCH_STATUS_OK)
         {
-            tobii_research_unsubscribe_from_gaze_data(eyetracker, &EyeTrackerWrapper::gaze_data_callback);
+            tobii_research_unsubscribe_from_gaze_data(eyetracker, gaze_data_callback);
             tobii_research_subscribe_to_gaze_data(eyetracker,
-                                                  &EyeTrackerWrapper::gaze_data_callback,
-                                                  &EyeTrackerWrapper::current_gaze_data);
+                                                  gaze_data_callback,
+                                                  &gaze_data);
         }
     }
 };
 
-void EyeTrackerWrapper::unsubscribe_gaze_data()
+void EyeTrackerWrapper::unsubscribe_gaze_data(tobii_research_gaze_data_callback call_back_func)
 {
     if (this->eyetracker)
     {
-        tobii_research_unsubscribe_from_gaze_data(this->eyetracker, &EyeTrackerWrapper::gaze_data_callback);
+        tobii_research_unsubscribe_from_gaze_data(this->eyetracker, call_back_func);
     }
 };
 
 // user position guide
+void EyeTrackerWrapper::user_position_guide_callback(TobiiResearchUserPositionGuide *user_position_guide, void *user_data)
+{
+    memcpy(user_data, user_position_guide, sizeof(*user_position_guide));
+};
 
 void EyeTrackerWrapper::subscribe_user_position()
 {
     if (this->eyetracker)
     {
+        auto callback_func = [](TobiiResearchUserPositionGuide *user_position_guide, void *user_data)
+        {
+            EyeTrackerWrapper().user_position_guide_callback(user_position_guide, user_data);
+        };
         TobiiResearchStatus status;
-        status = tobii_research_subscribe_to_user_position_guide(this->eyetracker,
-                                                                 &EyeTrackerWrapper::user_position_guide_callback,
-                                                                 &EyeTrackerWrapper::user_position);
+        status = tobii_research_subscribe_to_user_position_guide(this->eyetracker, callback_func, &this->user_position);
         if (status != TOBII_RESEARCH_STATUS_OK)
         {
-            tobii_research_unsubscribe_from_user_position_guide(eyetracker, &EyeTrackerWrapper::user_position_guide_callback);
+            tobii_research_unsubscribe_from_user_position_guide(eyetracker, callback_func);
             tobii_research_subscribe_to_user_position_guide(eyetracker,
-                                                            &EyeTrackerWrapper::user_position_guide_callback,
-                                                            &EyeTrackerWrapper::user_position);
+                                                            callback_func,
+                                                            &this->user_position);
         }
     }
 };
+
 void EyeTrackerWrapper::unsubscribe_user_position()
 {
+    auto callback_func = [](TobiiResearchUserPositionGuide *user_position_guide, void *user_data)
+    {
+        EyeTrackerWrapper().user_position_guide_callback(user_position_guide, user_data);
+    };
     if (this->eyetracker)
     {
-        tobii_research_unsubscribe_from_user_position_guide(eyetracker, &EyeTrackerWrapper::user_position_guide_callback);
+        tobii_research_unsubscribe_from_user_position_guide(eyetracker, callback_func);
     }
-};
-
-// static methods
-void EyeTrackerWrapper::clear_gaze_data()
-{
-    EyeTrackerWrapper::gaze_data.clear();
-};
-
-QVector<TobiiResearchGazeData> EyeTrackerWrapper::get_gaze_data()
-{
-    return EyeTrackerWrapper::gaze_data;
-};
-
-TobiiResearchGazeData EyeTrackerWrapper::get_current_gaze_data()
-{
-    return EyeTrackerWrapper::current_gaze_data;
 };
 
 TobiiResearchUserPositionGuide EyeTrackerWrapper::get_user_position()
 {
-    return EyeTrackerWrapper::user_position;
-};
-
-void EyeTrackerWrapper::gaze_data_callback(TobiiResearchGazeData *gaze_data, void *user_data)
-{
-    memcpy(user_data, gaze_data, sizeof(*gaze_data));
-    if ((gaze_data->left_eye.gaze_point.validity == TOBII_RESEARCH_VALIDITY_VALID) ||
-        (gaze_data->right_eye.gaze_point.validity == TOBII_RESEARCH_VALIDITY_VALID))
-        EyeTrackerWrapper::gaze_data.append(*gaze_data);
-};
-
-void EyeTrackerWrapper::user_position_guide_callback(TobiiResearchUserPositionGuide *user_position_guide, void *user_data)
-{
-    memcpy(user_data, user_position_guide, sizeof(*user_position_guide));
+    return this->user_position;
 };
 
 TobiiResearchTrackBox EyeTrackerWrapper::get_track_box()
@@ -258,6 +240,11 @@ TobiiResearchTrackBox EyeTrackerWrapper::get_track_box()
     return track_box;
 };
 
+EyeTrackerWrapper::EyeTrackerInfo EyeTrackerWrapper::get_info()
+{
+    return EyeTrackerWrapper::get_eyetracker_info(this->eyetracker);
+};
+// other static methods
 EyeTrackerWrapper::EyeTrackers EyeTrackerWrapper::find_eyetrackers()
 {
     EyeTrackerWrapper::EyeTrackers eyetrackers;
@@ -296,4 +283,77 @@ EyeTrackerWrapper::EyeTrackerInfo EyeTrackerWrapper::get_eyetracker_info(TobiiRe
     tobii_research_free_string(serial_number);
     tobii_research_free_string(device_name);
     return info;
+};
+
+QVariantHash convert_to_QVariantHash(TobiiResearchCalibrationPoint cali_point)
+{
+    QVariantHash hash_table;
+    hash_table["pos_dpa"] = QList<QVariant>({cali_point.position_on_display_area.x,
+                                             cali_point.position_on_display_area.y});
+    QList<QVariant> calibration_samples;
+    calibration_samples.reserve(cali_point.calibration_sample_count);
+    for (size_t i = 0; i < cali_point.calibration_sample_count; ++i)
+    {
+        TobiiResearchCalibrationSample sample = cali_point.calibration_samples[i];
+        QVariantHash data;
+        QVariantHash left_eye, right_eye;
+        left_eye["pos_dpa"] = QList<QVariant>({sample.left_eye.position_on_display_area.x,
+                                               sample.left_eye.position_on_display_area.y});
+        left_eye["validity"] = sample.left_eye.validity;
+        right_eye["pos_dpa"] = QList<QVariant>({sample.right_eye.position_on_display_area.x,
+                                                sample.right_eye.position_on_display_area.y});
+        right_eye["validity"] = sample.right_eye.validity;
+        data["left_eye"] = left_eye;
+        data["right_eye"] = right_eye;
+        calibration_samples[i] = data;
+    }
+    hash_table["calibration_samples"] = calibration_samples;
+    return hash_table;
+};
+
+QVariantHash convert_to_QVariantHash(TobiiResearchGazePoint gaze_point)
+{
+    QVariantHash hash_table;
+    hash_table["pos_dpa"] = QList<QVariant>({gaze_point.position_on_display_area.x,
+                                             gaze_point.position_on_display_area.y});
+    hash_table["pos_ucs"] = QList<QVariant>({gaze_point.position_in_user_coordinates.x,
+                                             gaze_point.position_in_user_coordinates.y,
+                                             gaze_point.position_in_user_coordinates.z});
+    hash_table["validity"] = gaze_point.validity;
+    return hash_table;
+};
+
+QVariantHash convert_to_QVariantHash(TobiiResearchGazeOrigin gaze_origin)
+{
+    QVariantHash hash_table;
+    hash_table["pos_tbcs"] = QList<QVariant>({gaze_origin.position_in_track_box_coordinates.x,
+                                              gaze_origin.position_in_track_box_coordinates.y,
+                                              gaze_origin.position_in_track_box_coordinates.z});
+    hash_table["pos_ucs"] = QList<QVariant>({gaze_origin.position_in_user_coordinates.x,
+                                             gaze_origin.position_in_user_coordinates.y,
+                                             gaze_origin.position_in_user_coordinates.z});
+    hash_table["validity"] = gaze_origin.validity;
+    return hash_table;
+};
+
+QVariantHash convert_to_QVariantHash(TobiiResearchGazeData gaze_data)
+{
+    QVariantHash hash_table;
+    hash_table["device_time_stamp"] = gaze_data.device_time_stamp;
+    hash_table["system_time_stamp"] = gaze_data.system_time_stamp;
+    QVariantHash left_eye, right_eye;
+    left_eye["gaze_point"] = convert_to_QVariantHash(gaze_data.left_eye.gaze_point);
+    left_eye["gaze_origin"] = convert_to_QVariantHash(gaze_data.left_eye.gaze_origin);
+    right_eye["gaze_point"] = convert_to_QVariantHash(gaze_data.right_eye.gaze_point);
+    right_eye["gaze_origin"] = convert_to_QVariantHash(gaze_data.right_eye.gaze_origin);
+    QVariantHash pupil_data;
+    pupil_data["diameter"] = gaze_data.left_eye.pupil_data.diameter;
+    pupil_data["validity"] = gaze_data.left_eye.pupil_data.validity;
+    left_eye["pupil_data"] = pupil_data;
+    pupil_data["diameter"] = gaze_data.right_eye.pupil_data.diameter;
+    pupil_data["validity"] = gaze_data.right_eye.pupil_data.validity;
+    right_eye["pupil_data"] = pupil_data;
+    hash_table["left_eye"] = left_eye;
+    hash_table["right_eye"] = right_eye;
+    return hash_table;
 };

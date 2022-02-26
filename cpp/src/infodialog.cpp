@@ -14,7 +14,7 @@ InfoDialog::InfoDialog(QWidget *parent)
     this->setWindowTitle(tr("实验参与者信息填写"));
     // this->is_debug = global_config.get_value("mode/debug",false).toBool();
     // this->out_data_path = global_config.get_value("data/path","./outdata").toString();
-    this->is_debug = false;
+    this->is_debug = true;
     this->out_data_path = "./outdata";
     this->participant_id = tr("debug");
     this->info_path = this->out_data_path.absoluteFilePath(this->participant_id);
@@ -63,9 +63,12 @@ void InfoDialog::terminate(){
     if(ok){
         this->participant_info_file.write(info_doc.toJson());
         this->participant_info_file.close();
+        qInfo()<<"participant info json file write success!";
     }else{
         qDebug()<<"participant info json file write error!";
     }
+    emit begin_setting(this->participant_id);
+    this->close();
 };
 
 void InfoDialog::on_btn_submit_clicked(){
@@ -80,9 +83,13 @@ void InfoDialog::on_btn_submit_clicked(){
         invalid_fields_str.append(tr("未填写!"));
         QString msg_text = invalid_fields_str.append("is invalid! id is set to 'debug'");
         QMessageBox::warning(this,msg_title,msg_text);
-        if(this->is_debug)
+        if(!this->is_debug)
+            return;
+        else{
             this->info_data["id"] = this->participant_id;
-        return;
+            this->terminate();
+            return;
+        }
     }
     QMessageBox::StandardButton submit_choose = QMessageBox::question(this,
                                                                       tr("信息提交确认"),

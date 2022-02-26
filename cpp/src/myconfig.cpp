@@ -48,10 +48,10 @@ MyConfig::~MyConfig(){
 };
 
 void MyConfig::default_init(){
-    QString json_config_str = "{'eyetracker': {'frequency': 60,'calibration_point_number': 9},"
-                              "'database': {'path': './imgdb'},'data': {'path': './outdata'},"
-                              "'log': {'path': './log'},'image_show': {'last_time': 10,'time_interval': 3},"
-                              "'mode': {'debug': False,}}";
+    QString json_config_str = "{\"eyetracker\": {\"frequency\": 60,\"calibration_point_number\": 9},"
+                              "\"database\": {\"path\": \"./imgdb\"},\"data\": {\"path\": \"./outdata\"},"
+                              "\"log\": {\"path\": \"./log\"},\"image_show\": {\"last_time\": 10,\"time_interval\": 3},"
+                              "\"mode\": {\"debug\": false}}";
     QJsonParseError parseError;
     QJsonDocument json_doc = QJsonDocument::fromJson(json_config_str.toUtf8(),&parseError);
     QJsonObject json_config = json_doc.object();
@@ -63,8 +63,9 @@ void MyConfig::default_init(){
 void MyConfig::load_eyetracker(const QString& address){
     eyetracker_wrapper = new EyeTrackerWrapper(address);
 };
-void MyConfig::set_value(const QString& key,const QVariant value){
 
+void MyConfig::set_value(const QString& key,const QVariant value){
+    config_params[key] = value;
 };
 
 QVariant MyConfig::get_value(const QString& key,const QVariant default_value) const{

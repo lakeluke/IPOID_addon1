@@ -6,6 +6,17 @@
 #include <QMessageBox>
 #include <QTime>
 #include <algorithm>
+
+static TobiiResearchGazeData global_gaze_data;
+static QList<TobiiResearchGazeData> global_gaze_data_list;
+void gaze_data_callback(TobiiResearchGazeData *tr_gaze_data, void *user_data)
+{
+    memcpy(user_data, tr_gaze_data, sizeof(*tr_gaze_data));
+    if ((tr_gaze_data->left_eye.gaze_point.validity == TOBII_RESEARCH_VALIDITY_VALID) ||
+        (tr_gaze_data->right_eye.gaze_point.validity == TOBII_RESEARCH_VALIDITY_VALID))
+        global_gaze_data_list.append(*tr_gaze_data);
+};
+
 ImageShowWidget::ImageShowWidget(QWidget *parent)
     : QWidget{parent}
 {
@@ -59,13 +70,13 @@ void ImageShowWidget::init_timer()
 };
 void ImageShowWidget::init_connections()
 {
-    connect(this->imgshow_timer, SIGNAL(timeout), this, SLOT(do_timer_timeout));
+    connect(this->imgshow_timer, SIGNAL(timeout()), this, SLOT(do_timer_timeout()));
     if (this->eyetracker_wrap->eyetracker)
-        connect(this->detect_error_timer, SIGNAL(timeout), this, SLOT(do_error_detection));
-    connect(this, SIGNAL(eye_detection_error), this, SLOT(pause));
-    connect(this, SIGNAL(experiment_error), this, SLOT(pause));
-    connect(this, SIGNAL(experiment_pause), this, SLOT(pause));
-    connect(this, SIGNAL(experiment_finished), this, SLOT(pause));
+        connect(this->detect_error_timer, SIGNAL(timeout()), this, SLOT(do_error_detection()));
+    connect(this, SIGNAL(eye_detection_error(QString)), this, SLOT(pause(QString)));
+    connect(this, SIGNAL(experiment_error(QString)), this, SLOT(pause(QString)));
+    connect(this, SIGNAL(experiment_pause(QString)), this, SLOT(pause(QString)));
+    connect(this, SIGNAL(experiment_finished(QString)), this, SLOT(pause(QString)));
 };
 
 void ImageShowWidget::load_images()
@@ -77,7 +88,7 @@ void ImageShowWidget::load_images()
     bool imgdb_exist = dir.exists();
     if (!imgdb_exist)
     {
-        this->experiment_error("imgdb directory not exist");
+        emit experiment_error("imgdb directory not exist");
         return;
     }
     QStringList ls_imgdb = dir.entryList();
@@ -99,9 +110,9 @@ void ImageShowWidget::subscribe_eye_data()
     if (this->eyetracker_wrap->eyetracker)
     {
         if (this->is_subscribed)
-            this->eyetracker_wrap->clear_gaze_data();
+            global_gaze_data_list.clear();
         else
-            this->eyetracker_wrap->subscribe_gaze_data();
+            this->eyetracker_wrap->subscribe_gaze_data(gaze_data_callback, global_gaze_data);
         this->is_subscribed = true;
     }
     else
@@ -118,7 +129,7 @@ void ImageShowWidget::subscribe_eye_data()
 
 void ImageShowWidget::save_eye_data(const QString &filetype)
 {
-    QVector<TobiiResearchGazeData> gaze_data = this->eyetracker_wrap->get_gaze_data();
+    auto gaze_data = global_gaze_data_list;
     if (filetype.contains("txt"))
     {
         QFile file(this->current_eye_data_file_name + ".txt");
@@ -184,7 +195,7 @@ void ImageShowWidget::save_eye_data(const QString &filetype)
         file.close();
     };
 }
-void ImageShowWidget::begin_test(const QString &participant_id)
+void ImageShowWidget::begin_test(QString participant_id)
 {
     this->setWindowState(Qt::WindowMaximized);
     this->setWindowFlag(Qt::FramelessWindowHint);
@@ -198,7 +209,7 @@ void ImageShowWidget::begin_test(const QString &participant_id)
     this->do_timer_timeout();
     this->showFullScreen();
 };
-void ImageShowWidget::continue_test(const QString &participant_id)
+void ImageShowWidget::continue_test(QString participant_id)
 {
     // this->setWindowState(Qt::WindowMaximized);
     // this->setWindowFlag(Qt::FramelessWindowHint);
@@ -219,13 +230,13 @@ void ImageShowWidget::continue_test(const QString &participant_id)
     this->eye_detect_error_count = 0;
     this->showFullScreen();
 };
-void ImageShowWidget::pause(const QString &str)
+void ImageShowWidget::pause(QString str)
 {
     this->imgshow_timer->stop();
     this->detect_error_timer->stop();
     if (this->eyetracker_wrap->eyetracker)
     {
-        this->eyetracker_wrap->unsubscribe_gaze_data();
+        this->eyetracker_wrap->unsubscribe_gaze_data(gaze_data_callback);
     }
     this->state = this->state & (~(1 << this->DisplayState::READY));
     this->close();
@@ -247,7 +258,7 @@ void ImageShowWidget::do_timer_timeout()
                 if (this->state | (1 << this->DisplayState::START))
                     this->state = this->state & (~(1 << this->DisplayState::START));
                 else
-                    this->save_eye_data(("txt", "json"));
+                    this->save_eye_data("txt,json");
                 this->detect_error_timer->stop();
                 this->state = this->state & (~(1 << this->DisplayState::IMAGE));
                 this->countdown = this->image_show_interval;
@@ -280,7 +291,7 @@ void ImageShowWidget::do_timer_timeout()
                 }
                 else
                 {
-                    this->experiment_finished();
+                    this->experiment_finished("finish");
                     return;
                 }
             }
@@ -291,7 +302,7 @@ void ImageShowWidget::do_timer_timeout()
 };
 void ImageShowWidget::do_error_detection()
 {
-    TobiiResearchGazeData current_gaze_data = this->eyetracker_wrap->get_current_gaze_data();
+    TobiiResearchGazeData current_gaze_data = global_gaze_data;
     if (current_gaze_data.left_eye.gaze_point.validity == 0 &&
         current_gaze_data.right_eye.gaze_point.validity == 0)
         this->eye_detect_error_count = this->eye_detect_error_count + 1;
@@ -302,20 +313,20 @@ void ImageShowWidget::do_error_detection()
         this->detect_error_timer->stop();
     this->imgshow_timer->stop();
     if (this->eyetracker_wrap->eyetracker)
-        this->eyetracker_wrap->unsubscribe_gaze_data();
-    this->eyetracker_wrap->clear_gaze_data();
+        this->eyetracker_wrap->unsubscribe_gaze_data(gaze_data_callback);
+    global_gaze_data_list.clear();
     this->eye_detect_error_count = 0;
     QString dlgTitle = "信息框";
     QString strInfo = "眼动仪捕捉眼动信息失败，请调整坐姿!";
     QMessageBox::information(this, dlgTitle, strInfo);
-    this->eye_detection_error("捕捉眼睛失败");
+    emit eye_detection_error("捕捉眼睛失败");
 };
 
 void ImageShowWidget::keyReleaseEvent(QKeyEvent *event)
 {
     if (event->key() == Qt::Key_P)
-        this->experiment_pause("key pause");
+        emit experiment_pause("key pause");
 
     if (event->key() == Qt::Key_Q)
-        this->experiment_pause("key quit");
+        emit experiment_pause("key quit");
 };

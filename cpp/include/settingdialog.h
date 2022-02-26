@@ -3,6 +3,7 @@
 
 #include "myconfig.h"
 #include <QDialog>
+
 extern MyConfig global_config;
 namespace Ui
 {
