@@ -108,7 +108,7 @@ void CalibrationWidget::process_calibration_result()
         calibration_sample_list = [ left_samples, right_samples ];
         */
     }
-    this->calibration_finish.emit(this->calibration_point_list, calibration_sample_list);
+    emit calibration_finish();
 };
 
 void CalibrationWidget::start_calibration()

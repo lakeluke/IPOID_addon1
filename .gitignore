@@ -1,4 +1,3 @@
-cpp/build*
 cpp/*.pro.user
 cpp/ui/include
 pyqt/imgdb
@@ -10,6 +9,8 @@ pyqt/*.spec
 **/__pycache__
 **/.idea
 **/.vscode
+**/build*
+**/*.code-workspace
 
 
 

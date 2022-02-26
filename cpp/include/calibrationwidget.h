@@ -1,37 +1,37 @@
 #ifndef CALIBRATIONWIDGET_H
 #define CALIBRATIONWIDGET_H
 
-#include <QWidget>
-#include <QVector>
+#include "eyetrackerwrapper.h"
 #include <QLayout>
 #include <QTimer>
+#include <QVector>
+#include <QWidget>
 #include <array>
-#include "eyetrackerwrapper.h"
+
+typedef std::array<int, 2> MyRes;
+typedef std::array<float, 2> MyFPoint2D;
 
 class CalibrationWidget : public QWidget
 {
     Q_OBJECT
-public:
-    typedef std::array<int,2> MyRes;
-    typedef std::array<float,2> MyFPoint;
-
 private:
-    class PointShow:public QWidget{
-        public:
-            explicit PointShow(QWidget *parent=nullptr);
+    class PointShow : public QWidget
+    {
+    public:
+        explicit PointShow(QWidget *parent = nullptr);
 
-        protected:
-            virtual void paintEvent(QPaintEvent*)override;
+    protected:
+        virtual void paintEvent(QPaintEvent *) override;
 
-        public:
-            void draw_circle(QPainter&);
-            float p_x;
-            float p_y;
-            int p_rad;
+    public:
+        void draw_circle(QPainter &);
+        float p_x;
+        float p_y;
+        int p_rad;
     };
 
 signals:
-    void calibration_finish(QVariantList,QVariantList);
+    void calibration_finish();
 
 public slots:
     void start_calibration();
@@ -42,7 +42,7 @@ public:
     ~CalibrationWidget();
 
 protected:
-    virtual void keyReleaseEvent(QKeyEvent*)override;
+    virtual void keyReleaseEvent(QKeyEvent *) override;
 
 private:
     void init_ui();
@@ -51,7 +51,7 @@ private:
     void process_calibration_result();
 
 private:
-    EyeTrackerWrapper* eyetracker_wrap;
+    EyeTrackerWrapper *eyetracker_wrap;
 
     MyRes resolution;
     bool is_debug;
@@ -67,13 +67,12 @@ private:
     PointShow *point_show;
     // calibration params
     uint calibration_point_number;
-    QVector<MyFPoint> calibration_point_list;
-    QHash<int,QVector<MyFPoint>> calibration_point_dict;
+    QVector<MyFPoint2D> calibration_point_list;
+    QHash<int, QVector<MyFPoint2D>> calibration_point_dict;
     // timer flags
     QTimer timer;
     uint current_point;
     uint current_refresh;
-
 
 public:
     EyeTrackerWrapper::CalibrationResult calibration_result;

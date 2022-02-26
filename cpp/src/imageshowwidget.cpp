@@ -121,7 +121,7 @@ void ImageShowWidget::save_eye_data(const QString &filetype)
     QVector<TobiiResearchGazeData> gaze_data = this->eyetracker_wrap->get_gaze_data();
     if (filetype.contains("txt"))
     {
-        QFile file = QFile(this->current_eye_data_file_name + ".txt");
+        QFile file(this->current_eye_data_file_name + ".txt");
         file.open(QIODevice::Append);
         for (TobiiResearchGazeData gaze_data_sample : gaze_data)
         {
@@ -172,7 +172,7 @@ void ImageShowWidget::save_eye_data(const QString &filetype)
     }
     if (filetype.contains("json"))
     {
-        QFile file = QFile(this->current_eye_data_file_name + ".json");
+        QFile file(this->current_eye_data_file_name + ".json");
         file.open(QIODevice::Append);
         QJsonArray gaze_data_json = QJsonArray();
         for (TobiiResearchGazeData gaze_data_sample : gaze_data)
@@ -261,12 +261,15 @@ void ImageShowWidget::do_timer_timeout()
                 {
                     this->cur_image_index = this->cur_image_index + 1;
                     this->cur_image_name = this->image_list[this->cur_image_index].split(".")[0];
-                    this->cur_image_file = os.path.join(
-                        this->dir_imgdb, this->image_list[this->cur_image_index]);
+                    QDir qdir_imgdb = QDir(this->dir_imgdb);
+                    this->cur_image_file = qdir_imgdb.absoluteFilePath(this->image_list[this->cur_image_index]);
                     this->cur_image.load(this->cur_image_file);
                     this->cur_pixmap = QPixmap::fromImage(this->cur_image);
                     this->image_display->setPixmap(this->cur_pixmap);
-                    this->current_eye_data_file_name = os.path.join(this->dir_out_data, this->participant_id, this->cur_image_name);
+                    QChar sep = QDir::separator();
+                    this->current_eye_data_file_name = QDir(this->dir_out_data).absolutePath() +
+                                                       sep + this->participant_id +
+                                                       sep + this->cur_image_name;
                     QString time_str = QTime::currentTime().toString("HH:mm:ss.zzz");
                     this->state = this->state | (1 << this->DisplayState::IMAGE);
                     this->countdown = this->image_show_time;

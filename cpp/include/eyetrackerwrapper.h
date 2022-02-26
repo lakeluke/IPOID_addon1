@@ -43,6 +43,7 @@ public:
     ~EyeTrackerWrapper(){};
 
     void set_frequency(const float frequency);
+    float get_current_frequency();
     QVector<float> get_frequency_options();
     // calibration
     void calibration_start();
