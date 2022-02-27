@@ -71,7 +71,7 @@ private:
     uint current_refresh;
 
 public:
-    EyeTrackerWrapper::CalibrationResult calibration_result;
+    TobiiResearchCalibrationResult* calibration_result;
 };
 
 #endif // CALIBRATIONWIDGET_H

@@ -1,6 +1,7 @@
 #include "imageshowwidget.h"
 #include <QDir>
 #include <QJsonArray>
+#include <QJsonDocument>
 #include <QKeyEvent>
 #include <QLayout>
 #include <QMessageBox>
@@ -51,14 +52,15 @@ void ImageShowWidget::load_config()
     this->eyetracker_frequency = global_config.get_value("eyetracker/frequency", 60).toInt();
     this->image_show_time = (global_config.get_value("image_show/last_time", 10).toInt() * 1000);
     this->image_show_interval = (global_config.get_value("image_show/time_interval", 3).toInt() * 1000);
-    this->dir_imgdb = global_config.get_value("database", "path").toString();
-    this->dir_out_data = global_config.get_value("data", "path").toString();
-    this->is_debug = global_config.get_value("mode", "debug").toBool();
+    this->dir_imgdb = global_config.get_value("database/path","./imgdb").toString();
+    this->dir_out_data = global_config.get_value("data/path","./outdata").toString();
+    this->is_debug = global_config.get_value("mode/debug",false).toBool();
     this->detect_error_interval_ms = 20;
     this->imgshow_timer_interval_ms = 100;
-    this->image_suffix = {".bmp", ".png", ".jpg", ".jpeg"};
+    this->image_suffix = {"bmp", "png", "jpg", "jpeg"};
     this->eye_detect_error_count = 0;
 };
+
 void ImageShowWidget::init_timer()
 {
     this->imgshow_timer = new QTimer(this);
@@ -68,6 +70,7 @@ void ImageShowWidget::init_timer()
     this->detect_error_timer->stop();
     this->detect_error_timer->setInterval(this->detect_error_interval_ms);
 };
+
 void ImageShowWidget::init_connections()
 {
     connect(this->imgshow_timer, SIGNAL(timeout()), this, SLOT(do_timer_timeout()));
@@ -76,7 +79,7 @@ void ImageShowWidget::init_connections()
     connect(this, SIGNAL(eye_detection_error(QString)), this, SLOT(pause(QString)));
     connect(this, SIGNAL(experiment_error(QString)), this, SLOT(pause(QString)));
     connect(this, SIGNAL(experiment_pause(QString)), this, SLOT(pause(QString)));
-    connect(this, SIGNAL(experiment_finished(QString)), this, SLOT(pause(QString)));
+    // connect(this, SIGNAL(experiment_finished(QString)), this, SLOT(pause(QString)));
 };
 
 void ImageShowWidget::load_images()
@@ -94,6 +97,8 @@ void ImageShowWidget::load_images()
     QStringList ls_imgdb = dir.entryList();
     for (QString img_file : ls_imgdb)
     {
+        if(img_file=="."||img_file=="..")
+            continue;
         QFileInfo fileinfo = QFileInfo(img_file);
         QString suffix = fileinfo.suffix();
         if (this->image_suffix.contains(suffix))
@@ -136,12 +141,12 @@ void ImageShowWidget::save_eye_data(const QString &filetype)
         file.open(QIODevice::Append);
         for (TobiiResearchGazeData gaze_data_sample : gaze_data)
         {
-            QString time_stamp_str = QString("%ld\t%ld\t")
+            QString time_stamp_str = QString("%1\t%2\t")
                                          .arg(gaze_data_sample.device_time_stamp)
                                          .arg(gaze_data_sample.system_time_stamp);
-            QString left_eye_data_str = QString("(%f,%f)\t(%f,%f,%f)\t%d\t"
-                                                "%f\t%d\t"
-                                                "(%f\t%f\t%f)\t(%f\t%f\t%f)\t%d\t")
+            QString left_eye_data_str = QString("(%1,%2)\t(%3,%4,%5)\t%6\t"
+                                                "%7\t%8\t"
+                                                "(%9,%10,%11)\t(%12,%13,%14)\t%15\t")
                                             .arg(gaze_data_sample.left_eye.gaze_point.position_on_display_area.x)
                                             .arg(gaze_data_sample.left_eye.gaze_point.position_on_display_area.y)
                                             .arg(gaze_data_sample.left_eye.gaze_point.position_in_user_coordinates.x)
@@ -157,9 +162,9 @@ void ImageShowWidget::save_eye_data(const QString &filetype)
                                             .arg(gaze_data_sample.left_eye.gaze_origin.position_in_track_box_coordinates.y)
                                             .arg(gaze_data_sample.left_eye.gaze_origin.position_in_track_box_coordinates.z)
                                             .arg(gaze_data_sample.left_eye.gaze_origin.validity);
-            QString right_eye_data_str = QString("(%f,%f)\t(%f,%f,%f)\t%d\t"
-                                                 "%f\t%d\t"
-                                                 "(%f\t%f\t%f)\t(%f\t%f\t%f)\t%d\t")
+            QString right_eye_data_str = QString("(%1,%2)\t(%3,%4,%5)\t%6\t"
+                                                 "%7\t%8\t"
+                                                 "(%9,%10,%11)\t(%12,%13,%14)\t%15\t")
                                              .arg(gaze_data_sample.right_eye.gaze_point.position_on_display_area.x)
                                              .arg(gaze_data_sample.right_eye.gaze_point.position_on_display_area.y)
                                              .arg(gaze_data_sample.right_eye.gaze_point.position_in_user_coordinates.x)
@@ -191,7 +196,9 @@ void ImageShowWidget::save_eye_data(const QString &filetype)
             QJsonObject gaze_sample_object = QJsonObject::fromVariantHash(convert_to_QVariantHash(gaze_data_sample));
             gaze_data_json.append(gaze_sample_object);
         }
-
+        QJsonDocument qjsondoc;
+        qjsondoc.setArray(gaze_data_json);
+        file.write(qjsondoc.toJson(QJsonDocument::Indented));
         file.close();
     };
 }
@@ -211,8 +218,8 @@ void ImageShowWidget::begin_test(QString participant_id)
 };
 void ImageShowWidget::continue_test(QString participant_id)
 {
-    // this->setWindowState(Qt::WindowMaximized);
-    // this->setWindowFlag(Qt::FramelessWindowHint);
+    this->setWindowState(Qt::WindowMaximized);
+    this->setWindowFlag(Qt::FramelessWindowHint);
     this->participant_id = participant_id;
     this->state = this->state | (1 << this->DisplayState::READY); // Ready bit set to 1
     this->countdown = 0;
@@ -230,6 +237,7 @@ void ImageShowWidget::continue_test(QString participant_id)
     this->eye_detect_error_count = 0;
     this->showFullScreen();
 };
+
 void ImageShowWidget::pause(QString str)
 {
     this->imgshow_timer->stop();
@@ -255,7 +263,7 @@ void ImageShowWidget::do_timer_timeout()
         {
             if (this->state & (1 << this->DisplayState::IMAGE))
             {
-                if (this->state | (1 << this->DisplayState::START))
+                if (this->state & (1 << this->DisplayState::START))
                     this->state = this->state & (~(1 << this->DisplayState::START));
                 else
                     this->save_eye_data("txt,json");
@@ -308,18 +316,19 @@ void ImageShowWidget::do_error_detection()
         this->eye_detect_error_count = this->eye_detect_error_count + 1;
     else
         this->eye_detect_error_count = 0;
-    if (this->eye_detect_error_count >= int(
-                                            (this->image_show_time / this->detect_error_interval_ms) * 0.75))
+    if (this->eye_detect_error_count >= (this->image_show_time * 0.75 / double(this->detect_error_interval_ms)))
+    {
         this->detect_error_timer->stop();
-    this->imgshow_timer->stop();
-    if (this->eyetracker_wrap->eyetracker)
-        this->eyetracker_wrap->unsubscribe_gaze_data(gaze_data_callback);
-    global_gaze_data_list.clear();
-    this->eye_detect_error_count = 0;
-    QString dlgTitle = "信息框";
-    QString strInfo = "眼动仪捕捉眼动信息失败，请调整坐姿!";
-    QMessageBox::information(this, dlgTitle, strInfo);
-    emit eye_detection_error("捕捉眼睛失败");
+        this->imgshow_timer->stop();
+        if (this->eyetracker_wrap->eyetracker)
+            this->eyetracker_wrap->unsubscribe_gaze_data(gaze_data_callback);
+        global_gaze_data_list.clear();
+        this->eye_detect_error_count = 0;
+        QString dlgTitle = "信息框";
+        QString strInfo = "眼动仪捕捉眼动信息失败，请调整坐姿!";
+        QMessageBox::information(this, dlgTitle, strInfo);
+        emit eye_detection_error("捕捉眼睛失败");
+    }
 };
 
 void ImageShowWidget::keyReleaseEvent(QKeyEvent *event)

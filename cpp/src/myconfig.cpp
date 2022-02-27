@@ -8,7 +8,7 @@ MyConfig::MyConfig()
     this->default_init();
 };
 
-MyConfig::MyConfig(const QString config_file_str)
+MyConfig::MyConfig(const QString& config_file_str)
 {
     QFile config_file(config_file_str);
     QFileInfo config_file_info(config_file);
@@ -31,7 +31,7 @@ MyConfig::MyConfig(const QString config_file_str)
     this->load_eyetracker();
 };
 
-MyConfig::MyConfig(const QJsonObject config_in_qjson)
+MyConfig::MyConfig(const QJsonObject& config_in_qjson)
 {
     this->config_params = config_in_qjson.toVariantHash();
     this->config_source.append("QJsonObject");
@@ -46,7 +46,7 @@ MyConfig::MyConfig(const MyConfig &other)
     }
     this->config_params = other.config_params;
     this->config_source = other.config_source;
-    eyetracker_wrapper = new EyeTrackerWrapper(*other.eyetracker_wrapper);
+    eyetracker_wrapper = other.eyetracker_wrapper;
 };
 
 MyConfig::~MyConfig()
@@ -72,7 +72,7 @@ void MyConfig::default_init()
 
 void MyConfig::load_eyetracker(const QString &address)
 {
-    eyetracker_wrapper = new EyeTrackerWrapper(address);
+    this->eyetracker_wrapper = new EyeTrackerWrapper(address);
 };
 
 void MyConfig::set_value(const QString &key, const QVariant value)

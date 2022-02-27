@@ -70,9 +70,9 @@ private:
     QString dir_out_data;
     QList<QString> image_suffix;
     // some image identify variables
-    uint image_num;
+    int image_num;
     QList<QString> image_list;
-    uint cur_image_index;
+    int cur_image_index;
     QImage cur_image;
     QPixmap cur_pixmap;
     QString current_eye_data_file_name;

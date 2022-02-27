@@ -18,6 +18,7 @@ namespace Ui
 {
     class StartPanel;
 }
+void user_position_guide_callback(TobiiResearchUserPositionGuide *, void *);
 class StartPanel : public QMainWindow
 {
     Q_OBJECT

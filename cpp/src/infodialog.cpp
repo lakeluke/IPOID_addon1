@@ -49,7 +49,7 @@ QStringList InfoDialog::check_info()
         }
         else
         {
-            qCritical() << tr("can't find field %s in QHash info_data").arg(field);
+            qCritical() << tr("can't find field %1 in QHash info_data").arg(field);
         }
     }
     return invalid_fields;
@@ -88,12 +88,13 @@ void InfoDialog::on_btn_submit_clicked()
             invalid_fields_str.append(field_dict[field]).append(" ");
         }
         invalid_fields_str.append(tr("未填写!"));
-        QString msg_text = invalid_fields_str.append("is invalid! id is set to 'debug'");
-        QMessageBox::warning(this, msg_title, msg_text);
+        QMessageBox::warning(this, msg_title, invalid_fields_str);
         if (!this->is_debug)
             return;
         else
         {
+            QString msg_text = invalid_fields_str.append("is invalid! id is set to 'debug'");
+            QMessageBox::warning(this, msg_title, msg_text);
             this->info_data["id"] = this->participant_id;
             this->terminate();
             return;
@@ -117,7 +118,7 @@ void InfoDialog::on_btn_submit_clicked()
         {
             QMessageBox::StandardButton is_cover = QMessageBox::question(this,
                                                                          tr("提示"),
-                                                                         tr("该编号已存在，是否覆盖？\n "
+                                                                         tr("该编号已存在，是否覆盖？ \n"
                                                                             "覆盖(Yes) 自动重编号(No) 修改编号(Cancel)"),
                                                                          QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel,
                                                                          QMessageBox::No);
@@ -126,12 +127,12 @@ void InfoDialog::on_btn_submit_clicked()
             else if (is_cover == QMessageBox::No)
             {
                 int repeat_no = 1;
-                QString repeat_str = QString("_rep%d").arg(repeat_no);
+                QString repeat_str = QString("_rep%1").arg(repeat_no);
                 this->info_path = this->out_data_path.absoluteFilePath(info_data["id"].toString() + repeat_str);
                 while (this->info_path.exists())
                 {
                     repeat_no += 1;
-                    repeat_str = QString("_rep%d").arg(repeat_no);
+                    repeat_str = QString("_rep%1").arg(repeat_no);
                     this->info_path = this->out_data_path.absoluteFilePath(info_data["id"].toString() + repeat_str);
                     this->info_path.mkpath(this->info_path.absolutePath());
                     this->terminate();

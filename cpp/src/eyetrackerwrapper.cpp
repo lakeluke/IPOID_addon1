@@ -8,18 +8,19 @@ EyeTrackerWrapper::EyeTrackerWrapper()
     result = tobii_research_find_all_eyetrackers(&eyetrackers);
     if (result != TOBII_RESEARCH_STATUS_OK)
     {
-        qDebug() << QString("Finding trackers failed. Error: %d\n").arg(result);
+        qDebug() << QString("Finding trackers failed. Error: %1").arg(result);
         goto CLEAR_EYETRACKER;
     }
     else if (eyetrackers->count > 0)
     {
-        qDebug() << QString("Find %d eyetrackers").arg(eyetrackers->count);
+    qDebug() << QString("Find %1 eyetrackers").arg(eyetrackers->count);
         eyetracker = eyetrackers->eyetrackers[0];
         EyeTrackerInfo info = this->get_eyetracker_info(eyetracker);
         this->address = info["address"].toString();
         this->serial_number = info["serial_number"].toString();
         this->device_name = info["device_name"].toString();
         this->model = info["model"].toString();
+        tobii_research_get_track_box(this->eyetracker, &this->tbx);
         tobii_research_get_eyetracker(this->address.toLatin1().data(), &this->eyetracker);
         tobii_research_free_eyetrackers(eyetrackers);
         return;
@@ -46,8 +47,8 @@ EyeTrackerWrapper::EyeTrackerWrapper(const QString &address)
         status = tobii_research_get_eyetracker(address.toLatin1().data(), &this->eyetracker);
         if (status != TOBII_RESEARCH_STATUS_OK)
         {
-            qDebug() << QString("Finding tracker of address: %s failed. Error: %d\n").arg(address).arg(status)
-                     << QString("Use Default Constructor\n");
+            qDebug() << QString("Finding tracker of address: %1 failed. Error: %2").arg(address).arg(status)
+                     << QString("Use Default Constructor");
             new (this) EyeTrackerWrapper();
         }
         else
@@ -57,12 +58,13 @@ EyeTrackerWrapper::EyeTrackerWrapper(const QString &address)
             this->serial_number = info["serial_number"].toString();
             this->device_name = info["device_name"].toString();
             this->model = info["model"].toString();
+            tobii_research_get_track_box(this->eyetracker, &this->tbx);
         };
     }
     else
     {
-        qDebug() << QString("Given address: %1 format invalid\n").arg(address)
-                 << QString("Use Default Constructor\n");
+        qDebug() << QString("Given address: %1 format invalid").arg(address)
+                 << QString("Use Default Constructor");
         new (this) EyeTrackerWrapper();
     };
 };
@@ -128,24 +130,23 @@ void EyeTrackerWrapper::calibration_collect(const MyFPoint2D &cpoint, bool recol
     }
 };
 
-EyeTrackerWrapper::CalibrationResult EyeTrackerWrapper::calibration_apply()
+TobiiResearchCalibrationResult* EyeTrackerWrapper::calibration_apply()
 {
-    CalibrationResult calibration_result;
-    TobiiResearchCalibrationResult *presult = calibration_result.mp_result;
+    TobiiResearchCalibrationResult *presult;
     if (eyetracker)
     {
         TobiiResearchStatus status;
         status = tobii_research_screen_based_calibration_compute_and_apply(eyetracker, &presult);
         if (status == TOBII_RESEARCH_STATUS_OK && presult->status == TOBII_RESEARCH_CALIBRATION_SUCCESS)
         {
-            qDebug() << QString("Compute and apply returned %i and collected at %zu points.\n").arg(status).arg(presult->calibration_point_count);
+            qDebug() << QString("Compute and apply returned %1 and collected at %2 points.").arg(status).arg(presult->calibration_point_count);
         }
         else
         {
-            qDebug() << QString("Calibration failed!\n");
+            qDebug() << QString("Calibration failed!");
         }
     }
-    return calibration_result;
+    return presult;
 };
 
 void EyeTrackerWrapper::calibration_end()
@@ -179,65 +180,42 @@ void EyeTrackerWrapper::subscribe_gaze_data(tobii_research_gaze_data_callback ga
     }
 };
 
-void EyeTrackerWrapper::unsubscribe_gaze_data(tobii_research_gaze_data_callback call_back_func)
+void EyeTrackerWrapper::unsubscribe_gaze_data(tobii_research_gaze_data_callback callback_func)
 {
     if (this->eyetracker)
     {
-        tobii_research_unsubscribe_from_gaze_data(this->eyetracker, call_back_func);
+        tobii_research_unsubscribe_from_gaze_data(this->eyetracker, callback_func);
     }
 };
 
 // user position guide
-void EyeTrackerWrapper::user_position_guide_callback(TobiiResearchUserPositionGuide *user_position_guide, void *user_data)
-{
-    memcpy(user_data, user_position_guide, sizeof(*user_position_guide));
-};
-
-void EyeTrackerWrapper::subscribe_user_position()
+void EyeTrackerWrapper::subscribe_user_position(tobii_research_user_position_guide_callback callback_func,TobiiResearchUserPositionGuide& user_position)
 {
     if (this->eyetracker)
     {
-        auto callback_func = [](TobiiResearchUserPositionGuide *user_position_guide, void *user_data)
-        {
-            EyeTrackerWrapper().user_position_guide_callback(user_position_guide, user_data);
-        };
         TobiiResearchStatus status;
-        status = tobii_research_subscribe_to_user_position_guide(this->eyetracker, callback_func, &this->user_position);
+        status = tobii_research_subscribe_to_user_position_guide(this->eyetracker, callback_func, &user_position);
         if (status != TOBII_RESEARCH_STATUS_OK)
         {
-            tobii_research_unsubscribe_from_user_position_guide(eyetracker, callback_func);
-            tobii_research_subscribe_to_user_position_guide(eyetracker,
+            tobii_research_unsubscribe_from_user_position_guide(this->eyetracker, callback_func);
+            tobii_research_subscribe_to_user_position_guide(this->eyetracker,
                                                             callback_func,
-                                                            &this->user_position);
+                                                            &user_position);
         }
     }
 };
 
-void EyeTrackerWrapper::unsubscribe_user_position()
+void EyeTrackerWrapper::unsubscribe_user_position(tobii_research_user_position_guide_callback callback_func)
 {
-    auto callback_func = [](TobiiResearchUserPositionGuide *user_position_guide, void *user_data)
-    {
-        EyeTrackerWrapper().user_position_guide_callback(user_position_guide, user_data);
-    };
     if (this->eyetracker)
     {
-        tobii_research_unsubscribe_from_user_position_guide(eyetracker, callback_func);
+        tobii_research_unsubscribe_from_user_position_guide(this->eyetracker, callback_func);
     }
-};
-
-TobiiResearchUserPositionGuide EyeTrackerWrapper::get_user_position()
-{
-    return this->user_position;
 };
 
 TobiiResearchTrackBox EyeTrackerWrapper::get_track_box()
 {
-    TobiiResearchTrackBox track_box;
-    if (this->eyetracker)
-    {
-        tobii_research_get_track_box(this->eyetracker, &track_box);
-    }
-    return track_box;
+    return this->tbx;
 };
 
 EyeTrackerWrapper::EyeTrackerInfo EyeTrackerWrapper::get_info()
@@ -252,7 +230,7 @@ EyeTrackerWrapper::EyeTrackers EyeTrackerWrapper::find_eyetrackers()
     result = tobii_research_find_all_eyetrackers(&eyetrackers.mp_eyetrackers);
     if (result != TOBII_RESEARCH_STATUS_OK)
     {
-        qDebug() << QString("Finding trackers failed. Error: %d\n").arg(result);
+        qDebug() << QString("Finding trackers failed.").arg(result);
     }
     return eyetrackers;
 };
@@ -339,8 +317,8 @@ QVariantHash convert_to_QVariantHash(TobiiResearchGazeOrigin gaze_origin)
 QVariantHash convert_to_QVariantHash(TobiiResearchGazeData gaze_data)
 {
     QVariantHash hash_table;
-    hash_table["device_time_stamp"] = gaze_data.device_time_stamp;
-    hash_table["system_time_stamp"] = gaze_data.system_time_stamp;
+    hash_table["device_time_stamp"] = QString("%1").arg(gaze_data.device_time_stamp);
+    hash_table["system_time_stamp"] = QString("%1").arg(gaze_data.system_time_stamp);
     QVariantHash left_eye, right_eye;
     left_eye["gaze_point"] = convert_to_QVariantHash(gaze_data.left_eye.gaze_point);
     left_eye["gaze_origin"] = convert_to_QVariantHash(gaze_data.left_eye.gaze_origin);

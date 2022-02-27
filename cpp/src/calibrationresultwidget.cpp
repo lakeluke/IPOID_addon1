@@ -5,7 +5,7 @@ CalibrationResultWidget::EyeDataShow::EyeDataShow(QWidget *parent):QFrame(parent
     this->setFrameShape(QFrame::Box);
     this->setFrameShadow(QFrame::Raised);
     this->setLineWidth(2);
-    this->setStyleSheet("background-color:white");
+    this->setStyleSheet("background-color:gray");
     this->calibration_point_rad = 10;
     this->calibration_point_list = {{0.5, 0.5}, {0.1, 0.1}, {0.9, 0.1}, {0.9, 0.9}, {0.1, 0.9}};
 };
@@ -30,9 +30,7 @@ void CalibrationResultWidget::EyeDataShow::draw_eye_data(QPainter &painter)
 {
     QPen pen = QPen(Qt::black, 1, Qt::SolidLine);
     painter.setPen(pen);
-    QBrush brush;
-    brush.setColor(Qt::white);
-    brush.setStyle(Qt::SolidPattern);
+    QBrush brush(Qt::red,Qt::SolidPattern);
     painter.setBrush(brush);
     // draw calibration points
     for (MyFPoint2D point : this->calibration_point_list)
@@ -40,14 +38,13 @@ void CalibrationResultWidget::EyeDataShow::draw_eye_data(QPainter &painter)
         painter.drawEllipse(QPoint(point[0] * this->width(), point[1] * this->height()),
                             this->calibration_point_rad, this->calibration_point_rad);
     }
-
     pen = QPen(Qt::green, 3, Qt::SolidLine);
     painter.setPen(pen);
     for (QVariantList eye_pos : this->eye_data_list)
     {
-        if (eye_pos[2].toString() == "validity_valid_and_used")
+        if (eye_pos[2].toBool())
         {
-            painter.drawPoint(QPoint(eye_pos[0].toInt() * this->width(), eye_pos[1].toInt() * this->height()));
+            painter.drawPoint(QPoint(eye_pos[0].toFloat() * this->width(), eye_pos[1].toFloat() * this->height()));
         }
     }
 };
@@ -97,6 +94,7 @@ void CalibrationResultWidget::draw_calibration_samples(TobiiResearchCalibrationR
             }
         }
     };
+    tobii_research_free_screen_based_calibration_result(result);
     this->left_result->set_eye_data(calibration_point_list, left_eye_data_list);
     this->right_result->set_eye_data(calibration_point_list, right_eye_data_list);
     this->left_result->update();

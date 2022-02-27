@@ -4,6 +4,12 @@
 #include <QFileDialog>
 #include <QMessageBox>
 #include <QtMath>
+
+static TobiiResearchUserPositionGuide global_user_position;
+void user_position_guide_callback(TobiiResearchUserPositionGuide *user_position_guide, void *user_data)
+{
+    memcpy(user_data, user_position_guide, sizeof(*user_position_guide));
+};
 StartPanel::EyePosShow::EyePosShow(QWidget *parent) : QWidget(parent)
 {
     this->eye_pos_adcs[0] = {0.5, 0.5, 0.5}; // left_eye_pos
@@ -76,20 +82,12 @@ StartPanel::StartPanel(QWidget *parent) : QMainWindow(parent),
     this->dir_imgdb = global_config.get_value("database/path", "./imgdb").toString();
     this->ui->lineEdit_imgdb_dir->setText(this->dir_imgdb);
     this->participant_id = "debug";
-
     this->eyetracker_wrap = global_config.get_eyetracker_wrapper();
-
-    this->calibration_widget = new CalibrationWidget();
-    this->calibration_result = new CalibrationResultWidget();
-    this->setting_dialog = new SettingDialog();
-    this->image_show_widget = new ImageShowWidget();
-
+    this->experiment_started = false;
+    this->eyetracker_subscribed = false;
     this->timer = new QTimer();
     this->timer->stop();
     this->timer->setInterval(40);
-
-    this->experiment_started = false;
-    this->eyetracker_subscribed = false;
     this->init_connections();
 };
 
@@ -97,30 +95,19 @@ StartPanel::~StartPanel()
 {
     delete ui;
     delete timer;
-    delete calibration_widget;
-    delete calibration_result;
-    delete setting_dialog;
-    delete image_show_widget;
 };
 
 void StartPanel::init_connections()
 {
     connect(this->timer, SIGNAL(timeout()), this, SLOT(do_timer_timeout()));
-    connect(this, SIGNAL(start_calibration()), this->calibration_widget, SLOT(start_calibration()));
-    connect(this->calibration_widget, SIGNAL(calibration_finish(TobiiResearchCalibrationResult*)),
-            this->calibration_result, SLOT(draw_calibration_samples(TobiiResearchCalibrationResult*)));
-    connect(this->calibration_widget, SIGNAL(calibration_finish(TobiiResearchCalibrationResult*)),
-            this, SLOT(solve_calibration_end()));
-    connect(this, SIGNAL(begin_test(QString)), this->image_show_widget, SLOT(begin_test(QString)));
-    connect(this, SIGNAL(continue_test(QString)), this->image_show_widget, SLOT(continue_test(QString)));
-    connect(this->image_show_widget, SIGNAL(eye_detection_error(QString)), this, SLOT(solve_eye_detection_error()));
-    connect(this->image_show_widget, SIGNAL(experiment_pause(QString)), this, SLOT(image_show_pause()));
-    connect(this->image_show_widget, SIGNAL(experiment_finished(QString)), this, SLOT(finish_experiment()));
 };
 
 void StartPanel::on_action_setting_triggered()
 {
-    this->eyetracker_wrap->unsubscribe_user_position();
+    this->eyetracker_wrap->unsubscribe_user_position(user_position_guide_callback);
+    this->eyetracker_subscribed = false;
+    this->setting_dialog = new SettingDialog();
+    connect(this->setting_dialog,SIGNAL(settings_changed()),this,SLOT(on_btn_start_eyetracker_clicked()));
     this->setting_dialog->show();
 };
 
@@ -128,6 +115,7 @@ void StartPanel::on_btn_start_eyetracker_clicked()
 {
     if (!this->eyetracker_wrap->eyetracker)
     {
+        global_config.load_eyetracker();
         this->ui->eyetracker_info->clear();
         this->ui->eyetracker_info->appendPlainText(
             "there is no eyetracker detected, please check your connection and"
@@ -135,9 +123,16 @@ void StartPanel::on_btn_start_eyetracker_clicked()
     }
     else
     {
-        this->eyetracker_wrap->set_frequency(global_config.get_value("eyetracker/frequency", 60.0f).toFloat());
+        if (this->eyetracker_subscribed)
+        {
+            this->timer->stop();
+            QMessageBox::information(this, "提示", "重新向眼动仪请求位置数据，请稍等1～2秒");
+            this->eyetracker_wrap->unsubscribe_user_position(user_position_guide_callback);
+            this->eyetracker_subscribed = false;
+        }
         this->ui->eyetracker_info->clear();
         auto eyetracker_info = EyeTrackerWrapper::get_eyetracker_info(this->eyetracker_wrap->eyetracker);
+        float frequency = this->eyetracker_wrap->get_current_frequency();
         this->ui->eyetracker_info->appendPlainText(
             "Address:" + eyetracker_info["address"].toString());
         this->ui->eyetracker_info->appendPlainText(
@@ -147,19 +142,11 @@ void StartPanel::on_btn_start_eyetracker_clicked()
         this->ui->eyetracker_info->appendPlainText(
             "Serial number: " + eyetracker_info["serial_number"].toString());
         this->ui->eyetracker_info->appendPlainText(
-            QString("Gaze output frequency: %f").arg(this->eyetracker_wrap->get_current_frequency()));
-        if (!this->eyetracker_subscribed)
-        {
-            this->eyetracker_wrap->subscribe_user_position();
-            this->eyetracker_subscribed = true;
-        }
-        else
-        {
-            QMessageBox::information(this, "提示", "重新向眼动仪请求位置数据，请稍等1～2秒");
-            this->eyetracker_wrap->unsubscribe_user_position();
-            this->eyetracker_wrap->subscribe_user_position();
-        }
+            QString("Gaze output frequency: %1").arg(frequency));
+        this->eyetracker_wrap->subscribe_user_position(user_position_guide_callback,global_user_position);
+        this->eyetracker_subscribed = true;
         this->eye_show->IsPainter = true;
+
         this->timer->start();
         this->ui->btn_calibration->setEnabled(true);
     }
@@ -174,6 +161,13 @@ void StartPanel::on_btn_calibration_clicked()
     if (query_result == QMessageBox::Yes)
     {
         this->timer->stop();
+        this->calibration_widget = new CalibrationWidget();
+        this->calibration_result = new CalibrationResultWidget();
+        connect(this, SIGNAL(start_calibration()), this->calibration_widget, SLOT(start_calibration()));
+        connect(this->calibration_widget, SIGNAL(calibration_finish(TobiiResearchCalibrationResult*)),
+                this->calibration_result, SLOT(draw_calibration_samples(TobiiResearchCalibrationResult*)));
+        connect(this->calibration_widget, SIGNAL(calibration_finish(TobiiResearchCalibrationResult*)),
+                this, SLOT(solve_calibration_end()));
         emit start_calibration();
         if (!this->is_calibrated)
             this->is_calibrated = true;
@@ -224,6 +218,12 @@ void StartPanel::on_btn_start_clicked()
     {
         this->experiment_started = true;
         this->timer->stop();
+        this->image_show_widget = new ImageShowWidget();
+        connect(this, SIGNAL(begin_test(QString)), this->image_show_widget, SLOT(begin_test(QString)));
+        connect(this, SIGNAL(continue_test(QString)), this->image_show_widget, SLOT(continue_test(QString)));
+        connect(this->image_show_widget, SIGNAL(eye_detection_error(QString)), this, SLOT(solve_eye_detection_error()));
+        connect(this->image_show_widget, SIGNAL(experiment_pause(QString)), this, SLOT(image_show_pause()));
+        connect(this->image_show_widget, SIGNAL(experiment_finished(QString)), this, SLOT(finish_experiment()));
         emit begin_test(this->participant_id);
     }
     else
@@ -241,7 +241,7 @@ void StartPanel::begin_setting(QString participant_id)
 
 void StartPanel::do_timer_timeout()
 {
-    auto user_position = this->eyetracker_wrap->get_user_position();
+    TobiiResearchUserPositionGuide &user_position = global_user_position;
     if (user_position.left_eye.validity || user_position.right_eye.validity)
     {
         MyFPoint3D left_data = {
@@ -256,7 +256,7 @@ void StartPanel::do_timer_timeout()
         this->eye_show->eye_pos_adcs[0] = left_data;
         this->eye_show->eye_pos_adcs[1] = right_data;
         this->eye_show->update();
-        auto track_box = this->eyetracker_wrap->get_track_box();
+        TobiiResearchTrackBox track_box = this->eyetracker_wrap->get_track_box();
         MyFPoint3D track_box_base = {
             track_box.front_upper_right.x,
             track_box.front_upper_right.y,
@@ -296,7 +296,7 @@ void StartPanel::do_timer_timeout()
         else
         {
             this->ui->pgb_v->setValue(distance);
-            this->ui->distance->setText(QString("%d").arg(distance));
+            this->ui->distance->setText(QString("%1").arg(distance));
         }
     }
 };
@@ -308,12 +308,14 @@ void StartPanel::solve_calibration_end()
 
 void StartPanel::solve_eye_detection_error()
 {
+    this->ui->btn_start->setText("继续实验");
     this->timer->start();
 };
 
 void StartPanel::finish_experiment()
 {
-    this->eyetracker_wrap->unsubscribe_user_position();
+    this->eyetracker_wrap->unsubscribe_user_position(&user_position_guide_callback);
+    QMessageBox::information(this,"实验结束","感谢您的参与!");
     this->close();
 };
 

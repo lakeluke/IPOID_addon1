@@ -12,7 +12,6 @@ MyConfig global_config("./config.json");
 int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
-
     QTranslator translator;
     const QStringList uiLanguages = QLocale::system().uiLanguages();
     for (const QString &locale : uiLanguages)

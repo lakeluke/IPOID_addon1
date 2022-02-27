@@ -11,7 +11,7 @@ extern MyConfig global_config;
 CalibrationWidget::PointShow::PointShow(QWidget *parent) : QWidget(parent)
 {
     this->p = {0.5f, 0.5f};
-    p_rad = 0;
+    this->p_rad = 0;
 };
 
 void CalibrationWidget::PointShow::paintEvent(QPaintEvent *event)
@@ -26,7 +26,7 @@ void CalibrationWidget::PointShow::paintEvent(QPaintEvent *event)
         painter.setBrush(brush);
         painter.drawEllipse(QPoint(this->p[0] * this->width(),
                                    this->p[1] * this->height()),
-                            this->p_rad, this->p_rad);
+                                   this->p_rad, this->p_rad);
     }
     painter.end();
 };
@@ -82,8 +82,8 @@ void CalibrationWidget::init_calibration_params()
         this->calibration_point_list = this->calibration_point_dict[this->calibration_point_number];
     else
     {
-        qDebug() << tr("配置参数calibration_point_number错误！\n "
-                       "必须为5, 9, 13三个值之一\n"
+        qDebug() << tr("配置参数calibration_point_number错误！ "
+                       "必须为5, 9, 13三个值之一"
                        "此参数将被设置为默认值5");
         this->calibration_point_list = this->calibration_point_dict[5];
     }
@@ -99,14 +99,14 @@ void CalibrationWidget::init_timer()
 void CalibrationWidget::process_calibration_result()
 {
     QVariantList calibration_sample_list;
-    if (this->calibration_result.mp_result)
+    if (this->calibration_result)
     {
-        TobiiResearchCalibrationStatus calibration_status = this->calibration_result.mp_result->status;
+        TobiiResearchCalibrationStatus calibration_status = this->calibration_result->status;
         if (calibration_status != TOBII_RESEARCH_CALIBRATION_SUCCESS)
         {
             QMessageBox::StandardButton qresult;
             qresult = QMessageBox::question(this, "矫正失败",
-                                            tr("矫正状态：%s \n 是否重新矫正？").arg(calibration_status),
+                                            tr("矫正状态：%1  是否重新矫正？").arg(calibration_status),
                                             QMessageBox::Yes | QMessageBox::No);
             if (qresult == QMessageBox::Yes)
             {
@@ -115,7 +115,7 @@ void CalibrationWidget::process_calibration_result()
             }
         }
     }
-    emit calibration_finish(this->calibration_result.mp_result);
+    emit calibration_finish(this->calibration_result);
 };
 
 void CalibrationWidget::start_calibration()
@@ -124,15 +124,16 @@ void CalibrationWidget::start_calibration()
     this->is_debug = global_config.get_value("mode/debug", false).toBool();
     this->current_point = 0;
     this->current_refresh = 0;
-    if (this->eyetracker_wrap->eyetracker)
+    if (!this->eyetracker_wrap->eyetracker)
     {
         if (this->is_debug)
             QMessageBox::information(this, "调试模式", "未发现眼动仪，仅演示显示效果！");
         else
             QMessageBox::information(this, "矫正开启错误", "未发现眼动仪，请检查连接");
     }
-    else
+    else{
         this->eyetracker_wrap->calibration_start();
+    }
     this->showFullScreen();
     this->timer.start();
 };
@@ -143,7 +144,7 @@ void CalibrationWidget::do_timer_timeout()
     {
         this->point_show->p[0] = this->calibration_point_list[this->current_point][0];
         this->point_show->p[1] = this->calibration_point_list[this->current_point][1];
-        this->point_show->p_rad = 40.0 * (1 - this->current_refresh / this->refresh_num_each_point);
+        this->point_show->p_rad = 40.0 * (1 - double(this->current_refresh) / this->refresh_num_each_point);
         this->point_show->update();
         if (this->current_refresh == this->refresh_num_each_point - this->refresh_num_each_calibration)
         {
@@ -178,6 +179,6 @@ void CalibrationWidget::keyReleaseEvent(QKeyEvent *key_event)
         this->timer.stop();
         this->close();
         this->eyetracker_wrap->calibration_end();
-        // this->calibration_finish->emit(this->calibration_point_list,[[],[],"calibration_key_Q exit"]);
+        emit calibration_finish(nullptr);
     }
 };

@@ -12,9 +12,10 @@ class MyConfig
 {
 public:
     MyConfig();
-    MyConfig(const QString config_file_str);
-    MyConfig(const QJsonObject config_in_qjson);
-    MyConfig(const MyConfig &other);
+    MyConfig(const QString& config_file_str);
+    MyConfig(const QJsonObject& config_in_qjson);
+    MyConfig(const MyConfig &other) = delete;
+    MyConfig& operator=(const MyConfig &other)= delete;
 
     void load_eyetracker(const QString &address = "");
     void set_value(const QString &key, const QVariant value);
