@@ -38,6 +38,7 @@ MyConfig::MyConfig(const QJsonObject& config_in_qjson)
     this->load_eyetracker();
 };
 
+/*
 MyConfig::MyConfig(const MyConfig &other)
 {
     if (this == &other)
@@ -48,7 +49,7 @@ MyConfig::MyConfig(const MyConfig &other)
     this->config_source = other.config_source;
     eyetracker_wrapper = other.eyetracker_wrapper;
 };
-
+*/
 MyConfig::~MyConfig()
 {
     if (this->eyetracker_wrapper)
