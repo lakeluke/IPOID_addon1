@@ -1,6 +1,6 @@
 #include "calibrationresultwidget.h"
 
-CalibrationResultWidget::EyeDataShow::EyeDataShow(QWidget *parent)
+CalibrationResultWidget::EyeDataShow::EyeDataShow(QWidget *parent):QFrame(parent)
 {
     this->setFrameShape(QFrame::Box);
     this->setFrameShadow(QFrame::Raised);
@@ -78,6 +78,25 @@ void CalibrationResultWidget::draw_calibration_samples(TobiiResearchCalibrationR
     QVector<MyFPoint2D> calibration_point_list;
     QVector<QVariantList> left_eye_data_list;
     QVector<QVariantList> right_eye_data_list;
+    if (result)
+    {
+        for (size_t i = 0; i < result->calibration_point_count; ++i)
+        {
+            auto tr_cali_point = result->calibration_points[i];
+            calibration_point_list.append({tr_cali_point.position_on_display_area.x,
+                                           tr_cali_point.position_on_display_area.y});
+            for (size_t j = 0; j < tr_cali_point.calibration_sample_count; ++j)
+            {
+                auto tr_cali_sample = tr_cali_point.calibration_samples[j];
+                left_eye_data_list.append({tr_cali_sample.left_eye.position_on_display_area.x,
+                                           tr_cali_sample.left_eye.position_on_display_area.y,
+                                           tr_cali_sample.left_eye.validity});
+                right_eye_data_list.append({tr_cali_sample.right_eye.position_on_display_area.x,
+                                            tr_cali_sample.right_eye.position_on_display_area.y,
+                                            tr_cali_sample.right_eye.validity});
+            }
+        }
+    };
     this->left_result->set_eye_data(calibration_point_list, left_eye_data_list);
     this->right_result->set_eye_data(calibration_point_list, right_eye_data_list);
     this->left_result->update();

@@ -83,8 +83,8 @@ void CalibrationWidget::init_calibration_params()
     else
     {
         qDebug() << tr("配置参数calibration_point_number错误！\n "
-                            "必须为5, 9, 13三个值之一\n"
-                            "此参数将被设置为默认值5");
+                       "必须为5, 9, 13三个值之一\n"
+                       "此参数将被设置为默认值5");
         this->calibration_point_list = this->calibration_point_dict[5];
     }
 };
@@ -114,24 +114,6 @@ void CalibrationWidget::process_calibration_result()
                 return;
             }
         }
-
-        QVector<TobiiResearchCalibrationEyeData> left_samples;
-        /*
-        right_samples = [];
-        for (calibration_point : this->calibration_result.mp_result->calibration_points)
-        {
-            for (calibration_sample : calibration_point.calibration_samples)
-            {
-                left_sample = (calibration_sample.left_eye.position_on_display_area +
-                               (calibration_sample.left_eye.validity, ));
-                right_sample = (calibration_sample.right_eye.position_on_display_area +
-                                (calibration_sample.right_eye.validity, ));
-                left_samples.append(left_sample);
-                right_samples.append(right_sample);
-            }
-        }
-        calibration_sample_list = [ left_samples, right_samples ];
-        */
     }
     emit calibration_finish(this->calibration_result.mp_result);
 };
