@@ -119,7 +119,7 @@ void InfoDialog::on_btn_submit_clicked()
             QMessageBox::StandardButton is_cover = QMessageBox::question(this,
                                                                          tr("提示"),
                                                                          tr("该编号已存在，是否覆盖？ \n"
-                                                                            "覆盖(Yes) 自动重编号(No) 修改编号(Cancel)"),
+                                                                            "覆盖(Yes) 自动重编号(No) 手动修改编号(Cancel)"),
                                                                          QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel,
                                                                          QMessageBox::No);
             if (is_cover == QMessageBox::Yes)

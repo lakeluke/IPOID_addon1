@@ -6,6 +6,7 @@
 MyConfig::MyConfig()
 {
     this->default_init();
+    this->dump("./config.json");
 };
 
 MyConfig::MyConfig(const QString& config_file_str)
@@ -22,7 +23,8 @@ MyConfig::MyConfig(const QString& config_file_str)
         QJsonDocument doc = QJsonDocument::fromJson(data, &parseError);
         if (parseError.error != QJsonParseError::NoError)
         {
-            qDebug() << QStringLiteral("配置错误");
+            qDebug() << QStringLiteral("配置文件载入错误!使用默认配置");
+            this->default_init();
             return;
         }
         QJsonObject obj = doc.object();
@@ -67,7 +69,6 @@ void MyConfig::default_init()
     QJsonObject json_config = json_doc.object();
     this->config_params = json_config.toVariantHash();
     this->config_source = "default";
-    this->dump("./config.json");
     this->load_eyetracker();
 };
 

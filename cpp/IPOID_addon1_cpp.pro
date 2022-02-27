@@ -28,7 +28,7 @@ HEADERS += \
     include/myconfig.h \
     include/settingdialog.h \
     include/startpanel.h \
-    include/myeyedata.h
+    include/mytypedef.h
 
 TRANSLATIONS += \
     IPOID_addon1_cpp_zh_CN.ts
@@ -51,13 +51,19 @@ DISTFILES += \
 INCLUDEPATH += $$PWD/include
 
 unix:!macx{
-HEADERS += include/linux/*.h
+HEADERS += include/linux/tobii_research.h \
+           include/linux/tobii_research_calibration.h \
+           include/linux/tobii_research_eyetracker.h \
+           include/linux/tobii_research_streams.h
 INCLUDEPATH += $$PWD/include/linux
 LIBS += -L$$PWD/lib/linux -ltobii_research
 }
 
 win32{
-HEADERS += include/win/*.h
+HEADERS += include/win/tobii_research.h \
+           include/win/tobii_research_calibration.h \
+           include/win/tobii_research_eyetracker.h \
+           include/win/tobii_research_streams.h
 INCLUDEPATH += $$PWD/include/win
 LIBS += -L$$PWD/lib/win -ltobii_research
 }

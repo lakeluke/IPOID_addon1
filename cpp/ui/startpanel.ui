@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>848</width>
-    <height>609</height>
+    <height>613</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -35,6 +35,7 @@
       <property name="font">
        <font>
         <pointsize>13</pointsize>
+        <weight>50</weight>
         <bold>false</bold>
        </font>
       </property>
@@ -75,6 +76,7 @@
              <property name="font">
               <font>
                <pointsize>11</pointsize>
+               <weight>75</weight>
                <bold>true</bold>
               </font>
              </property>
@@ -107,11 +109,12 @@
              <property name="font">
               <font>
                <pointsize>16</pointsize>
+               <weight>50</weight>
                <bold>false</bold>
               </font>
              </property>
              <property name="text">
-              <string>启动眼动仪</string>
+              <string>刷新眼动仪</string>
              </property>
             </widget>
            </item>
@@ -226,6 +229,7 @@
                <property name="font">
                 <font>
                  <pointsize>13</pointsize>
+                 <weight>50</weight>
                  <bold>false</bold>
                 </font>
                </property>
@@ -263,6 +267,7 @@
              <property name="font">
               <font>
                <pointsize>16</pointsize>
+               <weight>50</weight>
                <bold>false</bold>
               </font>
              </property>
@@ -303,7 +308,9 @@
           </property>
           <property name="font">
            <font>
+            <family>黑体</family>
             <pointsize>-1</pointsize>
+            <weight>50</weight>
             <italic>false</italic>
             <bold>false</bold>
            </font>
@@ -492,6 +499,7 @@ QGroupBox:title {
         <property name="font">
          <font>
           <pointsize>16</pointsize>
+          <weight>75</weight>
           <bold>true</bold>
           <underline>false</underline>
           <stylestrategy>PreferAntialias</stylestrategy>
@@ -531,7 +539,7 @@ QGroupBox:title {
      <x>0</x>
      <y>0</y>
      <width>848</width>
-     <height>21</height>
+     <height>26</height>
     </rect>
    </property>
    <widget class="QMenu" name="menu">

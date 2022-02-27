@@ -105,17 +105,18 @@ void CalibrationWidget::process_calibration_result()
         if (calibration_status != TOBII_RESEARCH_CALIBRATION_SUCCESS)
         {
             QMessageBox::StandardButton qresult;
-            qresult = QMessageBox::question(this, "矫正失败",
-                                            tr("矫正状态：%1  是否重新矫正？").arg(calibration_status),
+            qresult = QMessageBox::question(this, "警告",
+                                            tr("矫正失败，是否重新矫正？"),
                                             QMessageBox::Yes | QMessageBox::No);
             if (qresult == QMessageBox::Yes)
             {
                 this->start_calibration();
                 return;
             }
+        }else{
+            emit calibration_finish(this->calibration_result);
         }
     }
-    emit calibration_finish(this->calibration_result);
 };
 
 void CalibrationWidget::start_calibration()

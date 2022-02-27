@@ -106,7 +106,7 @@ void StartPanel::on_action_setting_triggered()
 {
     this->eyetracker_wrap->unsubscribe_user_position(user_position_guide_callback);
     this->eyetracker_subscribed = false;
-    this->setting_dialog = new SettingDialog();
+    this->setting_dialog = new SettingDialog(this);
     connect(this->setting_dialog,SIGNAL(settings_changed()),this,SLOT(on_btn_start_eyetracker_clicked()));
     this->setting_dialog->show();
 };
@@ -169,8 +169,10 @@ void StartPanel::on_btn_calibration_clicked()
         connect(this->calibration_widget, SIGNAL(calibration_finish(TobiiResearchCalibrationResult*)),
                 this, SLOT(solve_calibration_end()));
         emit start_calibration();
-        if (!this->is_calibrated)
+        if(this->is_debug){
             this->is_calibrated = true;
+        }
+
     }
 };
 
@@ -193,7 +195,12 @@ void StartPanel::on_btn_imgdb_apply_clicked()
         return;
     }
     global_config.set_value("database/path", this->dir_imgdb);
-    this->ui->btn_start->setEnabled(true);
+    if(this->is_calibrated)
+        this->ui->btn_start->setEnabled(true);
+    else if(this->is_debug){
+        QMessageBox::warning(this,"调试模式","眼动仪未矫正!");
+        this->ui->btn_start->setEnabled(true);
+    }
 };
 
 void StartPanel::on_btn_start_clicked()
@@ -210,7 +217,7 @@ void StartPanel::on_btn_start_clicked()
             QMessageBox::warning(this, "调试模式", "未检测到眼动仪设备，下面将只显示页面，不记录信息");
         else
         {
-            QMessageBox::warning(this, "fatal error", "未检测到眼动仪设备，请检查连接");
+            QMessageBox::warning(this, "错误", "未检测到眼动仪设备，请检查连接");
             return;
         }
     }
@@ -303,6 +310,12 @@ void StartPanel::do_timer_timeout()
 
 void StartPanel::solve_calibration_end()
 {
+    if (!this->is_calibrated)
+        this->is_calibrated = true;
+    QDir dir(this->dir_imgdb);
+    if(dir.exists()){
+        this->ui->btn_start->setEnabled(true);
+    };
     this->timer->start();
 };
 
@@ -316,6 +329,7 @@ void StartPanel::finish_experiment()
 {
     this->eyetracker_wrap->unsubscribe_user_position(&user_position_guide_callback);
     QMessageBox::information(this,"实验结束","感谢您的参与!");
+    this->image_show_widget->close();
     this->close();
 };
 
