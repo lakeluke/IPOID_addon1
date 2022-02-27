@@ -20,14 +20,15 @@ MyConfig::MyConfig(const QString config_file_str)
     {
         QJsonParseError parseError;
         QJsonDocument doc = QJsonDocument::fromJson(data, &parseError);
-        if (parseError.error == QJsonParseError::NoError)
+        if (parseError.error != QJsonParseError::NoError)
         {
             qDebug() << QStringLiteral("配置错误");
             return;
         }
         QJsonObject obj = doc.object();
         new (this) MyConfig(obj);
-    }
+    };
+    this->load_eyetracker();
 };
 
 MyConfig::MyConfig(const QJsonObject config_in_qjson)
