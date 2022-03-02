@@ -128,15 +128,16 @@ void InfoDialog::on_btn_submit_clicked()
             {
                 int repeat_no = 1;
                 QString repeat_str = QString("_rep%1").arg(repeat_no);
-                this->info_path = this->out_data_path.absoluteFilePath(info_data["id"].toString() + repeat_str);
+                this->info_path = this->out_data_path.absoluteFilePath(this->participant_id + repeat_str);
                 while (this->info_path.exists())
                 {
                     repeat_no += 1;
                     repeat_str = QString("_rep%1").arg(repeat_no);
-                    this->info_path = this->out_data_path.absoluteFilePath(info_data["id"].toString() + repeat_str);
-                    this->info_path.mkpath(this->info_path.absolutePath());
-                    this->terminate();
+                    this->info_path = this->out_data_path.absoluteFilePath(this->participant_id + repeat_str);
                 }
+                this->participant_id += repeat_str;
+                this->info_path.mkpath(this->info_path.absolutePath());
+                this->terminate();
             }
             else
             {

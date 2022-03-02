@@ -12,8 +12,8 @@ void user_position_guide_callback(TobiiResearchUserPositionGuide *user_position_
 };
 StartPanel::EyePosShow::EyePosShow(QWidget *parent) : QWidget(parent)
 {
-    this->eye_pos_adcs[0] = {0.5, 0.5, 0.5}; // left_eye_pos
-    this->eye_pos_adcs[1] = {0.5, 0.5, 0.5}; // right_eye_pos
+    this->eye_pos_adcs[0] = {0, 0, 0}; // left_eye_pos
+    this->eye_pos_adcs[1] = {0, 0, 0}; // right_eye_pos
     this->current_rad = 10;
     this->IsPainter = false;
 };
@@ -41,8 +41,8 @@ void StartPanel::EyePosShow::paintEvent(QPaintEvent *event)
             int eye_find = 0;
             for (auto point_pos : this->eye_pos_adcs)
             {
-                if (point_pos[0] >= 0 && point_pos[0] <= 1 &&
-                    point_pos[1] >= 0 && point_pos[0] <= 1)
+                if (point_pos[0] > 0 && point_pos[0] < 1 &&
+                    point_pos[1] > 0 && point_pos[0] < 1)
                 {
                     float relative_x = 1 - point_pos[0];
                     float relative_y = point_pos[1];
@@ -305,6 +305,10 @@ void StartPanel::do_timer_timeout()
             this->ui->pgb_v->setValue(distance);
             this->ui->distance->setText(QString("%1").arg(distance));
         }
+    }else{
+        this->eye_show->eye_pos_adcs={};
+        this->eye_show->update();
+        this->ui->pgb_h->setValue(0);
     }
 };
 

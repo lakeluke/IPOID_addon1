@@ -139,9 +139,17 @@
                  <bold>false</bold>
                 </font>
                </property>
+               <property name="autoFillBackground">
+                <bool>false</bool>
+               </property>
                <property name="styleSheet">
-                <string notr="true">font: 18pt &quot;微软雅黑&quot;;
-background-color: rgb(229, 229, 229);</string>
+                <string notr="true"/>
+               </property>
+               <property name="frameShape">
+                <enum>QFrame::WinPanel</enum>
+               </property>
+               <property name="frameShadow">
+                <enum>QFrame::Plain</enum>
                </property>
                <property name="text">
                 <string>很好</string>
@@ -163,8 +171,10 @@ background-color: rgb(229, 229, 229);</string>
                 </font>
                </property>
                <property name="styleSheet">
-                <string notr="true">font: 18pt &quot;微软雅黑&quot;;
-background-color: rgb(229, 229, 229);</string>
+                <string notr="true"/>
+               </property>
+               <property name="frameShape">
+                <enum>QFrame::WinPanel</enum>
                </property>
                <property name="text">
                 <string>好</string>
@@ -186,8 +196,10 @@ background-color: rgb(229, 229, 229);</string>
                 </font>
                </property>
                <property name="styleSheet">
-                <string notr="true">font: 18pt &quot;微软雅黑&quot;;
-background-color: rgb(229, 229, 229);</string>
+                <string notr="true"/>
+               </property>
+               <property name="frameShape">
+                <enum>QFrame::WinPanel</enum>
                </property>
                <property name="text">
                 <string>一般</string>
@@ -209,8 +221,10 @@ background-color: rgb(229, 229, 229);</string>
                 </font>
                </property>
                <property name="styleSheet">
-                <string notr="true">font: 18pt &quot;微软雅黑&quot;;
-background-color: rgb(229, 229, 229);</string>
+                <string notr="true"/>
+               </property>
+               <property name="frameShape">
+                <enum>QFrame::WinPanel</enum>
                </property>
                <property name="text">
                 <string>差</string>
@@ -231,9 +245,8 @@ background-color: rgb(229, 229, 229);</string>
                  <bold>false</bold>
                 </font>
                </property>
-               <property name="styleSheet">
-                <string notr="true">font: 18pt &quot;微软雅黑&quot;;
-background-color: rgb(229, 229, 229);</string>
+               <property name="frameShape">
+                <enum>QFrame::WinPanel</enum>
                </property>
                <property name="text">
                 <string>很差</string>
@@ -381,6 +394,9 @@ QSlider::handle:vertical {height: 25px;background: rgb(255, 255, 255);}</string>
          <font>
           <pointsize>15</pointsize>
          </font>
+        </property>
+        <property name="autoFillBackground">
+         <bool>false</bool>
         </property>
         <property name="text">
          <string>确认评分</string>
