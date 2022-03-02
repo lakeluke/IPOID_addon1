@@ -2,6 +2,7 @@
 #include <QFileInfo>
 #include <QJsonDocument>
 #include <QJsonParseError>
+#include <QMessageBox>
 
 MyConfig::MyConfig()
 {
@@ -68,7 +69,23 @@ void MyConfig::load_eyetracker(const QString &address)
 
 void MyConfig::set_value(const QString &key, const QVariant value)
 {
-    this->config_params[key] = value;
+    QStringList skeys = key.split('/');
+    if (skeys.size() == 1)
+    {
+        if (this->config_params.contains(key))
+            config_params[key] = value;
+        else
+            qCritical()<<QString("您设置的参数%1不存在").arg(key);
+    }else if(skeys.size() == 2){
+        QVariantHash ht;
+        if(config_params[skeys[0]].canConvert<QVariantHash>()){
+            ht = config_params[skeys[0]].toHash();
+        }
+        ht[skeys[1]] = value;
+        config_params[skeys[0]] = ht;
+    }else{
+        qCritical()<<QString("本程序暂不支持两层以上嵌套配置");
+    }
 };
 
 QVariant MyConfig::get_value(const QString &key, const QVariant default_value) const

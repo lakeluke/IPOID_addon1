@@ -137,7 +137,7 @@ void InfoDialog::on_btn_submit_clicked()
                     this->info_path.mkpath(this->info_path.absolutePath());
                     this->terminate();
                 }
-            }
+            } 
             else
             {
                 QMessageBox::information(this, tr("取消覆盖"), tr("你可以修改编号后再提交"));

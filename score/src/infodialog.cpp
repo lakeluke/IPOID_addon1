@@ -94,7 +94,7 @@ void InfoDialog::on_btn_submit_clicked()
         else
         {
             QString msg_text = invalid_fields_str.append("is invalid! id is set to 'debug'");
-            QMessageBox::warning(this, msg_title, msg_text);
+            QMessageBox::warning(this, "调试模式", msg_text);
             this->info_data["id"] = this->participant_id;
             this->terminate();
             return;

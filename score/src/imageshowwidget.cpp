@@ -305,7 +305,12 @@ void ImageShowWidget::do_timer_timeout()
                     this->cur_pixmap = QPixmap::fromImage(this->cur_image);
                     this->image_display->setPixmap(this->cur_pixmap);
                     QChar sep = QDir::separator();
-                    this->current_eye_data_file_name = QDir(this->dir_out_data).absolutePath() +
+                    QDir dir = QDir(this->dir_out_data);
+                    if(this->participant_id=="debug"){
+                        if(!dir.exists("debug"))
+                            dir.mkdir(this->participant_id);
+                    }
+                    this->current_eye_data_file_name = dir.absolutePath() +
                                                        sep + this->participant_id +
                                                        sep + this->cur_image_name;
                     QString time_str = QTime::currentTime().toString("HH:mm:ss.zzz");
