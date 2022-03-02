@@ -1,5 +1,5 @@
-cpp/*.pro.user
-cpp/ui/*.h
+**/*.pro.user
+**/ui/*.h
 pyqt/imgdb
 pyqt/testdb
 pyqt/outdata
