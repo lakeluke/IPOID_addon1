@@ -8,6 +8,8 @@ SettingDialog::SettingDialog(QWidget *parent) : QDialog(parent),
     EyeTrackerWrapper* eyetracker_wrap = global_config.get_eyetracker_wrapper();
     this->eyetracker_frequency_list = eyetracker_wrap->get_frequency_options();
     this->default_eyetracker_frequency = global_config.get_value("eyetracker/frequency", 60).toFloat();
+    this->ui->imgshow_time_value->setText(QString("%1").arg(global_config.get_value("image_show/last_time",9).toInt()*1000));
+    this->ui->imgshow_interval_value->setText(QString("%1").arg(global_config.get_value("image_show/time_interval",1).toInt()*1000));
     this->set_eyetracker_frequency_options();
     this->init_connections();
 }
