@@ -56,7 +56,7 @@ void ImageShowWidget::load_config()
     this->dir_out_data = global_config.get_value("data/path","./outdata").toString();
     this->is_debug = global_config.get_value("mode/debug",false).toBool();
     this->detect_error_interval_ms = 20;
-    this->imgshow_timer_interval_ms = 100;
+    this->imgshow_timer_interval_ms = 20;
     this->image_suffix = {"bmp", "png", "jpg", "jpeg"};
     this->eye_detect_error_count = 0;
 };
@@ -299,7 +299,7 @@ void ImageShowWidget::do_timer_timeout()
                 }
                 else
                 {
-                    this->experiment_finished("finish");
+                    emit experiment_finished("finish");
                     return;
                 }
             }
@@ -312,10 +312,9 @@ void ImageShowWidget::do_error_detection()
 {
     TobiiResearchGazeData current_gaze_data = global_gaze_data;
     if (current_gaze_data.left_eye.gaze_point.validity == 0 &&
-        current_gaze_data.right_eye.gaze_point.validity == 0)
+        current_gaze_data.right_eye.gaze_point.validity == 0){
         this->eye_detect_error_count = this->eye_detect_error_count + 1;
-    else
-        this->eye_detect_error_count = 0;
+    }
     if (this->eye_detect_error_count >= (this->image_show_time * 0.75 / double(this->detect_error_interval_ms)))
     {
         this->detect_error_timer->stop();

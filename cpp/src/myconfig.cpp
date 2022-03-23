@@ -58,6 +58,7 @@ void MyConfig::default_init()
     this->config_params = json_config.toVariantHash();
     this->config_source = "default";
     this->load_eyetracker();
+    this->dump("./config_template.json");
 };
 
 void MyConfig::load_eyetracker(const QString &address)

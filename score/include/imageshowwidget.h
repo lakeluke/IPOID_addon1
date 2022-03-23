@@ -43,6 +43,7 @@ public slots:
 private slots:
     void do_timer_timeout();
     void do_error_detection();
+    void save_score();
 
 private:
     virtual void keyReleaseEvent(QKeyEvent *) override;
@@ -85,6 +86,7 @@ private:
     QString cur_image_file;
     bool is_subscribed;
     QString participant_id;
+    int cur_image_score;
 };
 
 #endif // IMAGESHOWWIDGET_H

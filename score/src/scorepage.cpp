@@ -37,24 +37,26 @@ void ScorePage::slider_score_value_changed(int value)
 
 void ScorePage::keyPressEvent(QKeyEvent *event)
 {
-    if (event->key() == Qt::Key_Up)
-    {
-        int value = ui->slider_score->value();
-        ui->slider_score->setValue(value + 1);
-    }
-    if (event->key() == Qt::Key_Down)
-    {
-        int value = ui->slider_score->value();
-        ui->slider_score->setValue(value - 1);
-    }
-    if (event->key() == Qt::Key_Control)
-    {
-        this->on_btn_confirm_score_clicked();
-        this->update();
-    }
-    if (event->key() == Qt::Key_Enter||event->key() == Qt::Key_Return){
-        this->on_btn_confirm_score_clicked();
-        this->update();
+    if(this->isVisible()){
+        if (event->key() == Qt::Key_Up)
+        {
+            int value = ui->slider_score->value();
+            ui->slider_score->setValue(value + 1);
+        }
+        if (event->key() == Qt::Key_Down)
+        {
+            int value = ui->slider_score->value();
+            ui->slider_score->setValue(value - 1);
+        }
+    //    if (event->key() == Qt::Key_Control)
+    //    {
+    //        this->on_btn_confirm_score_clicked();
+    //        this->update();
+    //    }
+        if (event->key() == Qt::Key_Enter||event->key() == Qt::Key_Return){
+            this->on_btn_confirm_score_clicked();
+            this->update();
+        }
     }
 };
 

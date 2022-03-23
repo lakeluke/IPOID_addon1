@@ -23,7 +23,7 @@ ImageShowWidget::ImageShowWidget(QWidget *parent)
 {
     this->image_layout = new QGridLayout(this);
     this->image_display = new QLabel(this);
-    this->score_page = new ScorePage(this);
+    this->score_page = new ScorePage();
     this->resolution = {1920, 1080};
     this->eyetracker_wrap = global_config.get_eyetracker_wrapper();
     this->load_config();
@@ -58,7 +58,7 @@ void ImageShowWidget::load_config()
     this->dir_out_data = global_config.get_value("data/path","./outdata").toString();
     this->is_debug = global_config.get_value("mode/debug",false).toBool();
     this->detect_error_interval_ms = 20;
-    this->imgshow_timer_interval_ms = 100;
+    this->imgshow_timer_interval_ms = 20;
     this->image_suffix = {"bmp", "png", "jpg", "jpeg"};
     this->eye_detect_error_count = 0;
 };
@@ -92,6 +92,7 @@ void ImageShowWidget::load_images()
     this->image_num = 0;
     this->image_list.clear();
     this->cur_image_index = 0;
+    this->cur_image_score = 0;
     QDir dir = QDir(this->dir_imgdb);
     bool imgdb_exist = dir.exists();
     if (!imgdb_exist)
@@ -208,6 +209,15 @@ void ImageShowWidget::save_eye_data(const QString &filetype)
     };
 }
 
+void ImageShowWidget::save_score(){
+    QString score_file_name = this->dir_out_data + QDir::separator() + this->participant_id + QDir::separator() + "score.txt";
+    QFile score_file(score_file_name);
+    score_file.open(QIODevice::Append);
+    QString str_to_write = QString("%1\t%2\n").arg(this->cur_image_name).arg(this->cur_image_score);
+    score_file.write(str_to_write.toUtf8());
+    score_file.close();
+}
+
 void ImageShowWidget::begin_test(QString participant_id)
 {
     this->setWindowState(Qt::WindowMaximized);
@@ -259,9 +269,11 @@ void ImageShowWidget::pause(QString str)
     QMessageBox::warning(this, "pause", pause_msg);
 };
 
-void ImageShowWidget::score_submit(int){
-    if(this->countdown<this->image_show_interval*0.92){
+void ImageShowWidget::score_submit(int score){
+    if(this->countdown<this->image_show_interval*0.9){
         this->countdown = 0;
+        this->cur_image_score = score;
+        this->save_score();
     }
 };
 
@@ -287,6 +299,7 @@ void ImageShowWidget::do_timer_timeout()
                     this->save_eye_data("txt,json");
                     this->image_display->hide();
                     this->countdown = this->image_show_interval;
+                    this->score_page->setFocus();
                     emit set_score_page_edit_content(QString("%1/%2").arg(this->cur_image_index+1).arg(this->image_num),"50");
                     emit show_score_page();
                 };
@@ -319,13 +332,14 @@ void ImageShowWidget::do_timer_timeout()
                     this->subscribe_eye_data();
                     this->image_display->show();
                     this->score_page->hide();
+                    this->score_page->clearFocus();
                     this->imgshow_timer->start();
                     if (this->eyetracker_wrap->eyetracker)
                         this->detect_error_timer->start();
                 }
                 else
                 {
-                    this->experiment_finished("finish");
+                    emit experiment_finished("finish");
                     return;
                 }
             }
@@ -339,10 +353,9 @@ void ImageShowWidget::do_error_detection()
 {
     TobiiResearchGazeData current_gaze_data = global_gaze_data;
     if (current_gaze_data.left_eye.gaze_point.validity == 0 &&
-        current_gaze_data.right_eye.gaze_point.validity == 0)
+        current_gaze_data.right_eye.gaze_point.validity == 0){
         this->eye_detect_error_count = this->eye_detect_error_count + 1;
-    else
-        this->eye_detect_error_count = 0;
+    }
     if (this->eye_detect_error_count >= (this->image_show_time * 0.75 / double(this->detect_error_interval_ms)))
     {
         this->detect_error_timer->stop();
@@ -360,15 +373,18 @@ void ImageShowWidget::do_error_detection()
 
 void ImageShowWidget::keyReleaseEvent(QKeyEvent *event)
 {
+
     if (event->key() == Qt::Key_P)
         emit experiment_pause("key pause");
 
     if (event->key() == Qt::Key_Q)
         emit experiment_pause("key quit");
 
-    if (event->key() == Qt::Key_Enter||event->key() == Qt::Key_Return){
-        if(this->countdown<this->image_show_time*0.3){
-            this->countdown = 0;
+    if(this->isVisible()&&!this->score_page->isVisible()){
+        if (event->key() == Qt::Key_Control){
+            if(this->countdown<this->image_show_time*0.3){
+                this->countdown = 0;
+            }
         }
     }
 };

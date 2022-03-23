@@ -12,6 +12,5 @@ pyqt/*.spec
 **/build*
 **/*.code-workspace
 
-
-
-
+cpp/*.pro.user.*
+score/*.pro.user.*

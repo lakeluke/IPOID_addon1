@@ -52,7 +52,7 @@ void MyConfig::default_init()
 {
     QString json_config_str = "{\"eyetracker\": {\"frequency\": 60,\"calibration_point_number\": 9},"
                               "\"database\": {\"path\": \"./imgdb\"},\"data\": {\"path\": \"./outdata\"},"
-                              "\"log\": {\"path\": \"./log\"},\"image_show\": {\"last_time\": 8,\"time_interval\": 2},"
+                              "\"log\": {\"path\": \"./log\"},\"image_show\": {\"last_time\": 8,\"time_interval\": 10},"
                               "\"mode\": {\"debug\": false}}";
     QJsonParseError parseError;
     QJsonDocument json_doc = QJsonDocument::fromJson(json_config_str.toUtf8(), &parseError);
